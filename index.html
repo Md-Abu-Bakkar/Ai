@@ -1,0 +1,2590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CodeX Builder Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-ocean.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #1e1e2e;
+            --secondary: #292d3e;
+            --accent: #4CAF50;
+            --toolbar: #2a2f45;
+            --chat-bg: #1e1e2e;
+            --chat-user: #4CAF50;
+            --chat-ai: #3a3a4e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--primary);
+            color: #fff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panes-container {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            padding: 10px;
+            overflow: hidden;
+            height: calc(100vh - 60px);
+        }
+
+        .preview-pane, .editor-pane {
+            background: var(--secondary);
+            border-radius: 12px;
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 300px;
+            height: 100%;
+        }
+
+        .toolbar {
+            padding: 10px 15px;
+            background: var(--toolbar);
+            display: flex;
+            gap: 10px;
+            flex-shrink: 0;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .tool-btn.active {
+            background: var(--accent);
+            box-shadow: 0 2px 8px rgba(76,175,80,0.3);
+        }
+
+        .tool-btn:hover {
+            background: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .CodeMirror {
+            height: 100% !important;
+            font-family: 'Fira Code', monospace;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .CodeMirror-scroll {
+            min-height: 100%;
+            height: 100%;
+        }
+
+        #preview {
+            flex: 1;
+            border: none;
+            background: white;
+            overflow: auto;
+        }
+
+        .editor-container {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Compact Login Generator Styles */
+        .login-generator {
+            position: absolute;
+            top: 50px;
+            right: 15px;
+            background: var(--toolbar);
+            border-radius: 8px;
+            padding: 15px;
+            width: 320px;
+            max-height: 70vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .login-generator h3 {
+            margin: 0 0 15px 0;
+            color: white;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .login-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .login-form-group {
+            margin-bottom: 12px;
+        }
+
+        .login-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #ddd;
+        }
+
+        .login-form-group input,
+        .login-form-group select,
+        .login-form-group textarea {
+            width: 100%;
+            padding: 7px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background: #1e1e2e;
+            color: white;
+            font-size: 13px;
+        }
+
+        .login-form-group textarea {
+            min-height: 70px;
+            resize: vertical;
+        }
+
+        .login-color-picker {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .login-color-option {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .login-color-option.selected {
+            border-color: white;
+        }
+
+        .login-tabs {
+            display: flex;
+            margin-bottom: 12px;
+            border-bottom: 1px solid #444;
+        }
+
+        .login-tab {
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #aaa;
+            border-bottom: 2px solid transparent;
+        }
+
+        .login-tab.active {
+            color: white;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .login-tab-content {
+            display: none;
+        }
+
+        .login-tab-content.active {
+            display: block;
+        }
+
+        .login-generator-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        /* Tools Panel Styles */
+        .tools-panel {
+            position: absolute;
+            top: 50px;
+            left: 15px;
+            background: var(--toolbar);
+            border-radius: 8px;
+            padding: 15px;
+            width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .tools-panel h3 {
+            margin: 0 0 15px 0;
+            color: white;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tools-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .tools-category {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+
+        .tools-category h4 {
+            margin-bottom: 10px;
+            color: var(--accent);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tools-category h4 i {
+            font-size: 16px;
+        }
+
+        .tools-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tool-option-btn {
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.08);
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+
+        .tool-option-btn:hover {
+            background: var(--accent);
+        }
+
+        /* Notification styles */
+        .notification {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            padding: 10px 15px;
+            background: var(--accent);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            animation: fadeIn 0.3s;
+            font-size: 13px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Modal styles for tool options */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--toolbar);
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h3 {
+            color: white;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            margin-bottom: 15px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .modal-btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .modal-btn-secondary {
+            background: #444;
+            color: white;
+        }
+
+        /* AI Chat Interface Styles */
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 500px;
+            background: var(--chat-bg);
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            border: 1px solid #444;
+        }
+
+        .chat-container.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .chat-header {
+            padding: 12px 15px;
+            background: var(--toolbar);
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chat-header .close-chat {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background: var(--chat-user);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background: var(--chat-ai);
+            color: white;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-input-container {
+            padding: 10px;
+            border-top: 1px solid #444;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: none;
+            background: #2a2f45;
+            color: white;
+            font-size: 14px;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--accent);
+        }
+
+        .send-btn, .voice-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .send-btn:hover, .voice-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .voice-btn.listening {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+            font-size: 12px;
+        }
+
+        .message-action {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .message-action:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 999;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Custom Keyboard Styles */
+        .keyboard-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--toolbar);
+            border-top: 1px solid #444;
+            z-index: 1100;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            padding: 10px 5px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.3);
+        }
+
+        .keyboard-container.active {
+            transform: translateY(0);
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 8px;
+            gap: 5px;
+        }
+
+        .keyboard-key {
+            min-width: 30px;
+            height: 40px;
+            padding: 0 10px;
+            background: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+            max-width: 60px;
+            touch-action: manipulation;
+        }
+
+        .keyboard-key:hover {
+            background: var(--accent);
+        }
+
+        .keyboard-key.space {
+            max-width: 300px;
+            flex: 3;
+        }
+
+        .keyboard-key.tab {
+            max-width: 80px;
+        }
+
+        .keyboard-key.enter {
+            max-width: 100px;
+        }
+
+        .keyboard-key.shift {
+            max-width: 100px;
+        }
+
+        .keyboard-key.caps {
+            max-width: 100px;
+        }
+
+        .keyboard-key.backspace {
+            max-width: 80px;
+        }
+
+        .keyboard-key.special {
+            background: #3a3a4e;
+        }
+
+        .keyboard-key.active {
+            background: var(--accent);
+            transform: scale(0.95);
+        }
+
+        .keyboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            margin-bottom: 10px;
+        }
+
+        .keyboard-title {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .close-keyboard {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .keyboard-language {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            padding: 0 10px;
+        }
+
+        .language-btn {
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .language-btn.active {
+            background: var(--accent);
+        }
+
+        .symbols-container {
+            display: none;
+        }
+
+        .symbols-container.active {
+            display: block;
+        }
+
+        .keyboard-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            padding: 0 10px;
+        }
+
+        .keyboard-tab {
+            padding: 5px 10px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .keyboard-tab.active {
+            background: var(--accent);
+        }
+
+        /* File Actions Menu */
+        .file-actions {
+            position: absolute;
+            top: 50px;
+            right: 15px;
+            background: var(--toolbar);
+            border-radius: 8px;
+            padding: 10px;
+            width: 200px;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .file-action-btn {
+            width: 100%;
+            padding: 8px;
+            background: none;
+            border: none;
+            color: white;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-action-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Dark/Light Mode Toggle */
+        .mode-toggle {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--toolbar);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 768px) {
+            .panes-container {
+                flex-direction: column;
+                padding: 8px;
+                height: calc(100vh - 100px);
+            }
+            
+            .login-generator {
+                width: 280px;
+                right: 8px;
+                top: 45px;
+                max-height: 60vh;
+            }
+            
+            .tools-panel {
+                width: 300px;
+                max-height: 70vh;
+                left: 8px;
+                top: 45px;
+            }
+            
+            .modal-content {
+                width: 95%;
+            }
+
+            .chat-container {
+                width: 90%;
+                right: 5%;
+                max-height: 60vh;
+            }
+
+            .keyboard-key {
+                min-width: 25px;
+                height: 35px;
+                font-size: 14px;
+                padding: 0 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="mode-toggle" id="modeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="panes-container">
+        <div class="preview-pane">
+            <div class="toolbar">
+                <button class="tool-btn" id="editModeBtn">
+                    <i class="fas fa-edit"></i> Edit Mode
+                </button>
+                <button class="tool-btn" id="toolsBtn">
+                    <i class="fas fa-code"></i> Tools
+                </button>
+                <button class="tool-btn" id="loginPageBtn">
+                    <i class="fas fa-sign-in-alt"></i> Login Page
+                </button>
+                <button class="tool-btn" id="fileBtn">
+                    <i class="fas fa-file"></i> File
+                </button>
+                <button class="tool-btn" id="keyboardBtn">
+                    <i class="fas fa-keyboard"></i> Keyboard
+                </button>
+                <button class="tool-btn" id="clearBtn">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+            </div>
+            
+            <iframe id="preview" srcdoc="&lt;!DOCTYPE html&gt;&lt;html&gt;&lt;head&gt;&lt;style&gt;body{padding:20px}&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;h1 style='color:#333'&gt;Start Editing&lt;/h1&gt;&lt;/body&gt;&lt;/html&gt;"></iframe>
+        </div>
+
+        <div class="editor-pane">
+            <div class="toolbar">
+                <button class="tool-btn" id="copyBtn">
+                    <i class="fas fa-copy"></i> Copy Code
+                </button>
+                <button class="tool-btn" id="searchBtn">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <button class="tool-btn" id="replaceBtn">
+                    <i class="fas fa-exchange-alt"></i> Replace
+                </button>
+                <button class="tool-btn" id="formatBtn">
+                    <i class="fas fa-indent"></i> Format
+                </button>
+            </div>
+            <div class="editor-container">
+                <textarea id="codeEditor"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compact Login Generator -->
+    <div class="login-generator" id="loginGenerator">
+        <h3>
+            Login Page Generator
+            <button class="login-close-btn" id="closeLoginGenerator">&times;</button>
+        </h3>
+        
+        <div class="login-tabs">
+            <div class="login-tab active" data-tab="basic">Basic</div>
+            <div class="login-tab" data-tab="telegram">Telegram</div>
+            <div class="login-tab" data-tab="appearance">Appearance</div>
+        </div>
+        
+        <div class="login-tab-content active" id="basic-tab">
+            <div class="login-form-group">
+                <label for="login-page-title">Page Title</label>
+                <input type="text" id="login-page-title" value="Secure Login">
+            </div>
+            
+            <div class="login-form-group">
+                <label for="login-welcome-title">Welcome Title</label>
+                <input type="text" id="login-welcome-title" value="Welcome to Dashboard">
+            </div>
+            
+            <div class="login-form-group">
+                <label for="login-welcome-message">Welcome Message</label>
+                <textarea id="login-welcome-message">You have successfully logged in.</textarea>
+            </div>
+            
+            <div class="login-form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" value="admin">
+            </div>
+            
+            <div class="login-form-group">
+                <label for="login-password">Password</label>
+                <input type="text" id="login-password" value="password123">
+            </div>
+        </div>
+        
+        <div class="login-tab-content" id="telegram-tab">
+            <div class="login-form-group">
+                <label for="login-telegram-enabled">Telegram Notifications</label>
+                <select id="login-telegram-enabled">
+                    <option value="false">Disabled</option>
+                    <option value="true">Enabled</option>
+                </select>
+            </div>
+            
+            <div class="login-form-group">
+                <label for="login-bot-token">Bot Token</label>
+                <input type="text" id="login-bot-token" placeholder="123456789:ABCdef...">
+            </div>
+            
+            <div class="login-form-group">
+                <label for="login-chat-id">Chat ID</label>
+                <input type="text" id="login-chat-id" placeholder="987654321">
+            </div>
+        </div>
+        
+        <div class="login-tab-content" id="appearance-tab">
+            <div class="login-form-group">
+                <label>Primary Color</label>
+                <div class="login-color-picker">
+                    <div class="login-color-option selected" style="background-color: #4361ee;" data-color="#4361ee"></div>
+                    <div class="login-color-option" style="background-color: #3a0ca3;" data-color="#3a0ca3"></div>
+                    <div class="login-color-option" style="background-color: #7209b7;" data-color="#7209b7"></div>
+                    <div class="login-color-option" style="background-color: #f72585;" data-color="#f72585"></div>
+                </div>
+                <input type="hidden" id="login-primary-color" value="#4361ee">
+            </div>
+            
+            <div class="login-form-group">
+                <label>Secondary Color</label>
+                <div class="login-color-picker">
+                    <div class="login-color-option" style="background-color: #3f37c9;" data-color="#3f37c9"></div>
+                    <div class="login-color-option selected" style="background-color: #480ca8;" data-color="#480ca8"></div>
+                    <div class="login-color-option" style="background-color: #560bad;" data-color="#560bad"></div>
+                    <div class="login-color-option" style="background-color: #b5179e;" data-color="#b5179e"></div>
+                </div>
+                <input type="hidden" id="login-secondary-color" value="#3f37c9">
+            </div>
+        </div>
+        
+        <button class="login-generator-btn" id="generate-login-btn">
+            <i class="fas fa-code"></i> Generate & Insert
+        </button>
+    </div>
+
+    <!-- Tools Panel -->
+    <div class="tools-panel" id="toolsPanel">
+        <h3>
+            Web Design Tools
+            <button class="tools-close-btn" id="closeToolsPanel">&times;</button>
+        </h3>
+        
+        <div class="tools-category">
+            <h4><i class="fab fa-youtube"></i> YouTube Integration</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="youtube-video">
+                    <i class="fas fa-video"></i> Video Embed
+                </button>
+                <button class="tool-option-btn" data-tool="youtube-autoplay">
+                    <i class="fas fa-play-circle"></i> Auto-Play
+                </button>
+                <button class="tool-option-btn" data-tool="youtube-loop">
+                    <i class="fas fa-redo"></i> Loop Video
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-font"></i> Text Formatting</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="text-font">
+                    <i class="fas fa-font"></i> Font Selection
+                </button>
+                <button class="tool-option-btn" data-tool="text-size">
+                    <i class="fas fa-text-height"></i> Size & Color
+                </button>
+                <button class="tool-option-btn" data-tool="text-bold">
+                    <i class="fas fa-bold"></i> Bold
+                </button>
+                <button class="tool-option-btn" data-tool="text-italic">
+                    <i class="fas fa-italic"></i> Italic
+                </button>
+                <button class="tool-option-btn" data-tool="text-underline">
+                    <i class="fas fa-underline"></i> Underline
+                </button>
+                <button class="tool-option-btn" data-tool="text-align">
+                    <i class="fas fa-align-left"></i> Alignment
+                </button>
+                <button class="tool-option-btn" data-tool="text-highlight">
+                    <i class="fas fa-highlighter"></i> Highlight
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-link"></i> Hyperlinks & Navigation</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="link-text">
+                    <i class="fas fa-link"></i> Text Link
+                </button>
+                <button class="tool-option-btn" data-tool="link-image">
+                    <i class="fas fa-image"></i> Image Link
+                </button>
+                <button class="tool-option-btn" data-tool="link-anchor">
+                    <i class="fas fa-anchor"></i> Anchor Links
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fab fa-html5"></i> HTML & Ads</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="html-embed">
+                    <i class="fas fa-code"></i> Embed HTML
+                </button>
+                <button class="tool-option-btn" data-tool="ad-embed">
+                    <i class="fas fa-ad"></i> Ad Network Code
+                </button>
+                <button class="tool-option-btn" data-tool="javascript-exec">
+                    <i class="fab fa-js"></i> JavaScript
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-search-plus"></i> SEO Optimization</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="seo-meta">
+                    <i class="fas fa-tags"></i> Meta Tags
+                </button>
+                <button class="tool-option-btn" data-tool="seo-url">
+                    <i class="fas fa-link"></i> Friendly URLs
+                </button>
+                <button class="tool-option-btn" data-tool="seo-social">
+                    <i class="fas fa-share-alt"></i> Social Media
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-share-alt"></i> Social Media</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="social-share">
+                    <i class="fas fa-share"></i> Share Buttons
+                </button>
+                <button class="tool-option-btn" data-tool="copy-link">
+                    <i class="fas fa-copy"></i> Copy Link
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-layer-group"></i> Content Sections</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="collapsible">
+                    <i class="fas fa-chevron-down"></i> Collapsible
+                </button>
+                <button class="tool-option-btn" data-tool="read-more">
+                    <i class="fas fa-book-open"></i> Read More
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-table"></i> Tables & Lists</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="data-table">
+                    <i class="fas fa-table"></i> Data Table
+                </button>
+                <button class="tool-option-btn" data-tool="pricing-table">
+                    <i class="fas fa-dollar-sign"></i> Pricing Table
+                </button>
+                <button class="tool-option-btn" data-tool="custom-list">
+                    <i class="fas fa-list"></i> Custom Lists
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-paint-brush"></i> Styling & Effects</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="custom-button">
+                    <i class="fas fa-square"></i> Custom Buttons
+                </button>
+                <button class="tool-option-btn" data-tool="gradient">
+                    <i class="fas fa-fill-drip"></i> Gradients
+                </button>
+                <button class="tool-option-btn" data-tool="hover-effects">
+                    <i class="fas fa-mouse-pointer"></i> Hover Effects
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-moon"></i> Themes & Modes</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="dark-mode">
+                    <i class="fas fa-moon"></i> Dark/Light Mode
+                </button>
+                <button class="tool-option-btn" data-tool="theme-color">
+                    <i class="fas fa-palette"></i> Theme Colors
+                </button>
+            </div>
+        </div>
+        
+        <div class="tools-category">
+            <h4><i class="fas fa-window-maximize"></i> Popup Windows</h4>
+            <div class="tools-options">
+                <button class="tool-option-btn" data-tool="popup-button">
+                    <i class="fas fa-window-restore"></i> Popup Button
+                </button>
+                <button class="tool-option-btn" data-tool="popup-html">
+                    <i class="fas fa-code"></i> Custom HTML Popup
+                </button>
+                <button class="tool-option-btn" data-tool="popup-size">
+                    <i class="fas fa-expand"></i> Size & Position
+                </button>
+                <button class="tool-option-btn" data-tool="popup-timer">
+                    <i class="fas fa-clock"></i> Auto Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for tool options -->
+    <div class="modal" id="toolModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Tool Options</h3>
+                <button class="modal-close" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" id="cancelModal">Cancel</button>
+                <button class="modal-btn modal-btn-primary" id="applyModal">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Actions Menu -->
+    <div class="file-actions" id="fileActions">
+        <button class="file-action-btn" id="saveHtmlBtn">
+            <i class="fab fa-html5"></i> Save as HTML
+        </button>
+        <button class="file-action-btn" id="saveJsBtn">
+            <i class="fab fa-js"></i> Save as JavaScript
+        </button>
+        <button class="file-action-btn" id="saveCssBtn">
+            <i class="fab fa-css3"></i> Save as CSS
+        </button>
+        <button class="file-action-btn" id="saveJsonBtn">
+            <i class="fas fa-code"></i> Save as JSON
+        </button>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- AI Chat Interface -->
+    <button class="chat-toggle" id="chatToggle">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header" id="chatHeader">
+            <h3><i class="fas fa-robot"></i> CodeX AI Assistant</h3>
+            <button class="close-chat" id="closeChat">&times;</button>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai-message">
+                Hello! I'm your AI coding assistant. How can I help you with your project today?
+                <div class="message-actions">
+                    <button class="message-action" data-action="copy"><i class="fas fa-copy"></i> Copy</button>
+                    <button class="message-action" data-action="speak"><i class="fas fa-volume-up"></i> Speak</button>
+                </div>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask me anything about coding...">
+            <button class="voice-btn" id="voiceBtn">
+                <i class="fas fa-microphone"></i>
+            </button>
+            <button class="send-btn" id="sendBtn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Coding Keyboard -->
+    <div class="keyboard-container" id="keyboardContainer">
+        <div class="keyboard-header">
+            <div class="keyboard-title">CodeX Smart Keyboard</div>
+            <button class="close-keyboard" id="closeKeyboard">&times;</button>
+        </div>
+        
+        <div class="keyboard-language">
+            <button class="language-btn active" data-lang="html">HTML</button>
+            <button class="language-btn" data-lang="css">CSS</button>
+            <button class="language-btn" data-lang="js">JavaScript</button>
+            <button class="language-btn" data-lang="python">Python</button>
+            <button class="language-btn" data-lang="cpp">C++</button>
+        </div>
+        
+        <div class="keyboard-tabs">
+            <button class="keyboard-tab active" data-tab="main">Main</button>
+            <button class="keyboard-tab" data-tab="symbols">Symbols</button>
+            <button class="keyboard-tab" data-tab="snippets">Snippets</button>
+        </div>
+        
+        <!-- Main Keyboard -->
+        <div class="keyboard-main active">
+            <div class="keyboard-row">
+                <button class="keyboard-key" data-key="1">1</button>
+                <button class="keyboard-key" data-key="2">2</button>
+                <button class="keyboard-key" data-key="3">3</button>
+                <button class="keyboard-key" data-key="4">4</button>
+                <button class="keyboard-key" data-key="5">5</button>
+                <button class="keyboard-key" data-key="6">6</button>
+                <button class="keyboard-key" data-key="7">7</button>
+                <button class="keyboard-key" data-key="8">8</button>
+                <button class="keyboard-key" data-key="9">9</button>
+                <button class="keyboard-key" data-key="0">0</button>
+                <button class="keyboard-key backspace" data-key="Backspace"><i class="fas fa-backspace"></i></button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key" data-key="q">q</button>
+                <button class="keyboard-key" data-key="w">w</button>
+                <button class="keyboard-key" data-key="e">e</button>
+                <button class="keyboard-key" data-key="r">r</button>
+                <button class="keyboard-key" data-key="t">t</button>
+                <button class="keyboard-key" data-key="y">y</button>
+                <button class="keyboard-key" data-key="u">u</button>
+                <button class="keyboard-key" data-key="i">i</button>
+                <button class="keyboard-key" data-key="o">o</button>
+                <button class="keyboard-key" data-key="p">p</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key" data-key="a">a</button>
+                <button class="keyboard-key" data-key="s">s</button>
+                <button class="keyboard-key" data-key="d">d</button>
+                <button class="keyboard-key" data-key="f">f</button>
+                <button class="keyboard-key" data-key="g">g</button>
+                <button class="keyboard-key" data-key="h">h</button>
+                <button class="keyboard-key" data-key="j">j</button>
+                <button class="keyboard-key" data-key="k">k</button>
+                <button class="keyboard-key" data-key="l">l</button>
+                <button class="keyboard-key enter" data-key="Enter">Enter</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key shift" data-key="Shift"><i class="fas fa-arrow-up"></i></button>
+                <button class="keyboard-key" data-key="z">z</button>
+                <button class="keyboard-key" data-key="x">x</button>
+                <button class="keyboard-key" data-key="c">c</button>
+                <button class="keyboard-key" data-key="v">v</button>
+                <button class="keyboard-key" data-key="b">b</button>
+                <button class="keyboard-key" data-key="n">n</button>
+                <button class="keyboard-key" data-key="m">m</button>
+                <button class="keyboard-key" data-key=",">,</button>
+                <button class="keyboard-key" data-key=".">.</button>
+                <button class="keyboard-key" data-key="/">/</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key tab" data-key="Tab">Tab</button>
+                <button class="keyboard-key space" data-key=" ">Space</button>
+                <button class="keyboard-key" data-key="'">'</button>
+                <button class="keyboard-key" data-key=";">;</button>
+                <button class="keyboard-key" data-key="[">[</button>
+                <button class="keyboard-key" data-key="]">]</button>
+                <button class="keyboard-key" data-key="\">\</button>
+                <button class="keyboard-key" data-key="=">=</button>
+            </div>
+        </div>
+        
+        <!-- Symbols Keyboard -->
+        <div class="symbols-container">
+            <div class="keyboard-row">
+                <button class="keyboard-key special" data-key="~">~</button>
+                <button class="keyboard-key special" data-key="!">!</button>
+                <button class="keyboard-key special" data-key="@">@</button>
+                <button class="keyboard-key special" data-key="#">#</button>
+                <button class="keyboard-key special" data-key="$">$</button>
+                <button class="keyboard-key special" data-key="%">%</button>
+                <button class="keyboard-key special" data-key="^">^</button>
+                <button class="keyboard-key special" data-key="&">&</button>
+                <button class="keyboard-key special" data-key="*">*</button>
+                <button class="keyboard-key special" data-key="(">(</button>
+                <button class="keyboard-key special" data-key=")">)</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key special" data-key="_">_</button>
+                <button class="keyboard-key special" data-key="+">+</button>
+                <button class="keyboard-key special" data-key="{">{</button>
+                <button class="keyboard-key special" data-key="}">}</button>
+                <button class="keyboard-key special" data-key="|">|</button>
+                <button class="keyboard-key special" data-key=":">:</button>
+                <button class="keyboard-key special" data-key='"'>"</button>
+                <button class="keyboard-key special" data-key="<"><</button>
+                <button class="keyboard-key special" data-key=">">></button>
+                <button class="keyboard-key special" data-key="?">?</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key special" data-key="`">`</button>
+                <button class="keyboard-key special" data-key="-">-</button>
+                <button class="keyboard-key special" data-key="=">=</button>
+                <button class="keyboard-key special" data-key="[">[</button>
+                <button class="keyboard-key special" data-key="]">]</button>
+                <button class="keyboard-key special" data-key="\">\</button>
+                <button class="keyboard-key special" data-key=";">;</button>
+                <button class="keyboard-key special" data-key="'">'</button>
+                <button class="keyboard-key special" data-key=",">,</button>
+                <button class="keyboard-key special" data-key=".">.</button>
+                <button class="keyboard-key special" data-key="/">/</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key tab" data-key="Tab">Tab</button>
+                <button class="keyboard-key space" data-key=" ">Space</button>
+                <button class="keyboard-key" data-key="←">←</button>
+                <button class="keyboard-key" data-key="→">→</button>
+                <button class="keyboard-key" data-key="↑">↑</button>
+                <button class="keyboard-key" data-key="↓">↓</button>
+            </div>
+        </div>
+        
+        <!-- Snippets Keyboard -->
+        <div class="snippets-container">
+            <div class="keyboard-row">
+                <button class="keyboard-key snippet" data-snippet="html">&lt;html&gt;&lt;/html&gt;</button>
+                <button class="keyboard-key snippet" data-snippet="div">&lt;div&gt;&lt;/div&gt;</button>
+                <button class="keyboard-key snippet" data-snippet="p">&lt;p&gt;&lt;/p&gt;</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key snippet" data-snippet="function">function() {}</button>
+                <button class="keyboard-key snippet" data-snippet="if">if () {}</button>
+                <button class="keyboard-key snippet" data-snippet="for">for () {}</button>
+            </div>
+            <div class="keyboard-row">
+                <button class="keyboard-key snippet" data-snippet="console">console.log();</button>
+                <button class="keyboard-key snippet" data-snippet="return">return;</button>
+                <button class="keyboard-key snippet" data-snippet="import">import from '';</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/comment/comment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/brace-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/xml-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/indent-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/comment-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/html-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/javascript-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/xml-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/sql-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/display/autorefresh.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify-html.min.js"></script>
+    <script>
+    // Initialize CodeMirror editor with enhanced features
+    const editor = CodeMirror.fromTextArea(document.getElementById('codeEditor'), {
+        mode: "htmlmixed",
+        theme: "material-ocean",
+        lineNumbers: true,
+        autoCloseTags: true,
+        autoCloseBrackets: true,
+        lineWrapping: true,
+        foldGutter: true,
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+        extraKeys: {
+            "Alt-F": "findPersistent", 
+            "Ctrl-F": "findPersistent", 
+            "Cmd-F": "findPersistent",
+            "Ctrl-Space": "autocomplete",
+            "Ctrl-/": "toggleComment",
+            "Shift-Tab": "indentLess",
+            "Tab": "indentMore"
+        },
+        value: '<!DOCTYPE html>\n<html>\n<head>\n\t<title>My Project</title>\n</head>\n<body>\n\t<h1>Edit Content</h1>\n</body>\n</html>'
+    });
+
+    // Make editor fill available space
+    function resizeEditor() {
+        editor.setSize("100%", "100%");
+    }
+    window.addEventListener('resize', resizeEditor);
+    resizeEditor();
+
+    // Editor Change Handler
+    const handleEditorChange = () => {
+        const preview = document.getElementById('preview').contentDocument;
+        preview.open();
+        preview.write(editor.getValue());
+        preview.close();
+    };
+    editor.on('change', handleEditorChange);
+
+    // Show notification
+    function showNotification(message, duration = 3000) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.style.display = 'block';
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, duration);
+    }
+
+    // Toggle edit mode
+    let isEditMode = false;
+    document.getElementById('editModeBtn').addEventListener('click', function() {
+        isEditMode = !isEditMode;
+        const iframe = document.getElementById('preview');
+        const iframeDoc = iframe.contentDocument;
+        
+        if (isEditMode) {
+            iframeDoc.designMode = 'on';
+            this.innerHTML = '<i class="fas fa-eye"></i> Preview Mode';
+            this.classList.add('active');
+        } else {
+            iframeDoc.designMode = 'off';
+            this.innerHTML = '<i class="fas fa-edit"></i> Edit Mode';
+            this.classList.remove('active');
+        }
+    });
+
+    // Search functionality
+    document.getElementById('searchBtn').addEventListener('click', () => {
+        editor.execCommand("find");
+    });
+
+    // Replace functionality
+    document.getElementById('replaceBtn').addEventListener('click', () => {
+        editor.execCommand("replace");
+    });
+
+    // Format code
+    document.getElementById('formatBtn').addEventListener('click', () => {
+        const code = editor.getValue();
+        let formattedCode = code;
+        
+        // Try to detect the language
+        if (code.includes('<html') || code.includes('<!DOCTYPE html')) {
+            formattedCode = html_beautify(code, {
+                indent_size: 2,
+                indent_char: ' ',
+                max_preserve_newlines: 1,
+                preserve_newlines: true,
+                wrap_line_length: 80
+            });
+        } else if (code.includes('function') || code.includes('const') || code.includes('let') || code.includes('var')) {
+            formattedCode = js_beautify(code, {
+                indent_size: 2,
+                indent_char: ' ',
+                max_preserve_newlines: 1,
+                preserve_newlines: true,
+                wrap_line_length: 80
+            });
+        } else if (code.includes('{') && code.includes('}') && (code.includes(':') || code.includes(';'))) {
+            formattedCode = css_beautify(code, {
+                indent_size: 2,
+                indent_char: ' ',
+                max_preserve_newlines: 1,
+                preserve_newlines: true
+            });
+        }
+        
+        editor.setValue(formattedCode);
+        showNotification('Code formatted successfully');
+    });
+
+    // Login Page Generator Toggle
+    document.getElementById('loginPageBtn').addEventListener('click', function() {
+        const generator = document.getElementById('loginGenerator');
+        generator.style.display = generator.style.display === 'none' ? 'block' : 'none';
+    });
+
+    // Close login generator
+    document.getElementById('closeLoginGenerator').addEventListener('click', function() {
+        document.getElementById('loginGenerator').style.display = 'none';
+    });
+
+    // Initialize Login Generator
+    function initLoginGenerator() {
+        // Tab switching
+        document.querySelectorAll('.login-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.login-tab-content').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Color picker
+        document.querySelectorAll('.login-color-picker').forEach(picker => {
+            const options = picker.querySelectorAll('.login-color-option');
+            options.forEach(option => {
+                option.addEventListener('click', function() {
+                    options.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    const color = this.getAttribute('data-color');
+                    const inputId = 'login-' + picker.previousElementSibling.textContent.toLowerCase().replace(' ', '-') + '-color';
+                    document.getElementById(inputId).value = color;
+                });
+            });
+        });
+        
+        // Generate button
+        document.getElementById('generate-login-btn').addEventListener('click', generateLoginPage);
+    }
+
+    function generateLoginPage() {
+        // Get all configuration values
+        const pageTitle = document.getElementById('login-page-title').value;
+        const welcomeTitle = document.getElementById('login-welcome-title').value;
+        const welcomeMessage = document.getElementById('login-welcome-message').value;
+        const username = document.getElementById('login-username').value;
+        const password = document.getElementById('login-password').value;
+        const telegramEnabled = document.getElementById('login-telegram-enabled').value === 'true';
+        const botToken = document.getElementById('login-bot-token').value;
+        const chatId = document.getElementById('login-chat-id').value;
+        const primaryColor = document.getElementById('login-primary-color').value;
+        const secondaryColor = document.getElementById('login-secondary-color').value;
+        
+        // Validate required fields
+        if (!pageTitle || !username || !password) {
+            showNotification('Please fill in all required fields', 2000);
+            return;
+        }
+
+        if (telegramEnabled && (!botToken || !chatId)) {
+            showNotification('Please enter Telegram bot token and chat ID', 2000);
+            return;
+        }
+        
+        // Generate the HTML code
+        const code = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${pageTitle}</title>
+    <style>
+        :root {
+            --primary-color: ${primaryColor};
+            --secondary-color: ${secondaryColor};
+            --dark-color: #1b263b;
+            --light-color: #f8f9fa;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+            padding: 2rem;
+        }
+        
+        .login-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+        }
+        
+        .login-container h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 0.8rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .content {
+            display: none;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .logout-btn {
+            margin-top: 2rem;
+            padding: 0.8rem 1.5rem;
+            background-color: #f72585;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .error-message {
+            color: #f72585;
+            margin-top: 1rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container" id="loginContainer">
+            <h2>${pageTitle}</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+                <div class="error-message" id="errorMessage"></div>
+            </form>
+        </div>
+        
+        <div class="content" id="content">
+            <h1>${welcomeTitle}</h1>
+            <p>${welcomeMessage}</p>
+            <button class="logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            localStorage.removeItem('isLoggedIn');
+            
+            if(localStorage.getItem('isLoggedIn') === 'true') {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const errorMessage = document.getElementById('errorMessage');
+                
+                if(username === '${username}' && password === '${password}') {
+                    localStorage.setItem('isLoggedIn', 'true');
+                    document.getElementById('loginContainer').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+                    
+                    ${telegramEnabled ? `
+                    const now = new Date();
+                    const timeString = now.toLocaleString();
+                    sendTelegramNotification(username, timeString);` : ''}
+                } else {
+                    errorMessage.textContent = 'Invalid username or password';
+                }
+            });
+            
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                localStorage.removeItem('isLoggedIn');
+                document.getElementById('loginContainer').style.display = 'block';
+                document.getElementById('content').style.display = 'none';
+            });
+            
+            ${telegramEnabled ? `
+            function sendTelegramNotification(username, timeString) {
+                const botToken = '${botToken}';
+                const chatId = '${chatId}';
+                let telegramUsername = 'N/A';
+                let userId = 'N/A';
+                
+                if (window.Telegram && window.Telegram.WebApp) {
+                    const tgUser = Telegram.WebApp.initDataUnsafe.user;
+                    if (tgUser) {
+                        telegramUsername = tgUser.username ? '@' + tgUser.username : 'N/A';
+                        userId = tgUser.id || 'N/A';
+                    }
+                }
+                
+                const message = \`🔔 User Logged In\\n👤 Username: \${username}\\n📩 Telegram: \${telegramUsername}\\n🆔 ID: \${userId}\\n⏰ Time: \${timeString}\`;
+                
+                fetch(\`https://api.telegram.org/bot\${botToken}/sendMessage\`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        chat_id: chatId,
+                        text: message
+                    })
+                });
+            }` : ''}
+        });
+    <\/script>
+</body>
+</html>`;
+        
+        // Insert the generated code into the editor
+        editor.setValue(code);
+        
+        // Update the preview
+        const preview = document.getElementById('preview').contentDocument;
+        preview.open();
+        preview.write(code);
+        preview.close();
+        
+        // Close the generator and show success message
+        document.getElementById('loginGenerator').style.display = 'none';
+        showNotification('Login page generated successfully!');
+    }
+
+    // Clear editor content
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear all content?')) {
+            document.getElementById('preview').srcdoc = '<!DOCTYPE html><html><body style="padding:20px"><h1>Content Cleared</h1></body></html>';
+            editor.setValue('<!DOCTYPE html>\n<html>\n<head>\n\t<title>New Project</title>\n</head>\n<body>\n\n</body>\n</html>');
+            showNotification('Editor cleared successfully');
+        }
+    });
+
+    // Copy code to clipboard
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        navigator.clipboard.writeText(editor.getValue())
+            .then(() => showNotification('Code copied to clipboard!'))
+            .catch(err => showNotification('Failed to copy code'));
+    });
+
+    // File actions
+    document.getElementById('fileBtn').addEventListener('click', function(e) {
+        const fileActions = document.getElementById('fileActions');
+        fileActions.style.display = fileActions.style.display === 'none' ? 'block' : 'none';
+        e.stopPropagation();
+    });
+
+    // Save as HTML
+    document.getElementById('saveHtmlBtn').addEventListener('click', function() {
+        const code = editor.getValue();
+        const blob = new Blob([code], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'codex-project.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotification('File saved as HTML');
+        document.getElementById('fileActions').style.display = 'none';
+    });
+
+    // Save as JavaScript
+    document.getElementById('saveJsBtn').addEventListener('click', function() {
+        const code = editor.getValue();
+        const blob = new Blob([code], { type: 'text/javascript' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'codex-script.js';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotification('File saved as JavaScript');
+        document.getElementById('fileActions').style.display = 'none';
+    });
+
+    // Save as CSS
+    document.getElementById('saveCssBtn').addEventListener('click', function() {
+        const code = editor.getValue();
+        const blob = new Blob([code], { type: 'text/css' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'codex-styles.css';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotification('File saved as CSS');
+        document.getElementById('fileActions').style.display = 'none';
+    });
+
+    // Save as JSON
+    document.getElementById('saveJsonBtn').addEventListener('click', function() {
+        const code = editor.getValue();
+        const blob = new Blob([code], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'codex-data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotification('File saved as JSON');
+        document.getElementById('fileActions').style.display = 'none';
+    });
+
+    // Tools Panel Functionality
+    function initToolsPanel() {
+        // Toggle tools panel
+        document.getElementById('toolsBtn').addEventListener('click', function() {
+            const panel = document.getElementById('toolsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // Close tools panel
+        document.getElementById('closeToolsPanel').addEventListener('click', function() {
+            document.getElementById('toolsPanel').style.display = 'none';
+        });
+
+        // Modal functionality
+        const modal = document.getElementById('toolModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelModal = document.getElementById('cancelModal');
+
+        closeModal.addEventListener('click', () => modal.style.display = 'none');
+        cancelModal.addEventListener('click', () => modal.style.display = 'none');
+
+        // Handle tool option clicks
+        document.querySelectorAll('.tool-option-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tool = this.getAttribute('data-tool');
+                showToolOptions(tool);
+            });
+        });
+    }
+
+    function showToolOptions(tool) {
+        const modal = document.getElementById('toolModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const applyBtn = document.getElementById('applyModal');
+
+        // Set modal title
+        modalTitle.textContent = document.querySelector(`[data-tool="${tool}"]`).textContent.trim();
+
+        // Clear previous content
+        modalBody.innerHTML = '';
+
+        // Generate content based on tool
+        switch(tool) {
+            case 'youtube-video':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label for="youtube-url">YouTube Video URL</label>
+                        <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=...">
+                    </div>
+                    <div class="form-group">
+                        <label for="youtube-width">Width (px or %)</label>
+                        <input type="text" id="youtube-width" value="560">
+                    </div>
+                    <div class="form-group">
+                        <label for="youtube-height">Height (px)</label>
+                        <input type="text" id="youtube-height" value="315">
+                    </div>
+                `;
+                break;
+
+            case 'youtube-autoplay':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="youtube-autoplay" checked> Enable Auto-Play
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="youtube-mute" checked> Mute Audio
+                        </label>
+                    </div>
+                `;
+                break;
+
+            case 'text-font':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label for="text-font-family">Font Family</label>
+                        <select id="text-font-family">
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="'Courier New', monospace">Courier New</option>
+                            <option value="'Georgia', serif">Georgia</option>
+                            <option value="'Palatino Linotype', serif">Palatino</option>
+                            <option value="'Garamond', serif">Garamond</option>
+                            <option value="'Comic Sans MS', cursive">Comic Sans</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                            <option value="'Arial Black', sans-serif">Arial Black</option>
+                        </select>
+                    </div>
+                `;
+                break;
+
+            case 'text-size':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label for="text-font-size">Font Size</label>
+                        <input type="text" id="text-font-size" value="16px">
+                    </div>
+                    <div class="form-group">
+                        <label for="text-font-color">Font Color</label>
+                        <input type="color" id="text-font-color" value="#000000">
+                    </div>
+                `;
+                break;
+
+            case 'link-text':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label for="link-text">Link Text</label>
+                        <input type="text" id="link-text" placeholder="Click here">
+                    </div>
+                    <div class="form-group">
+                        <label for="link-url">URL</label>
+                        <input type="text" id="link-url" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="link-new-tab"> Open in new tab
+                        </label>
+                    </div>
+                `;
+                break;
+
+            case 'html-embed':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label for="html-code">HTML Code</label>
+                        <textarea id="html-code" rows="6" placeholder="Paste your HTML code here"></textarea>
+                    </div>
+                `;
+                break;
+
+            case 'seo-meta':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label for="meta-title">Meta Title</label>
+                        <input type="text" id="meta-title" placeholder="Page Title">
+                    </div>
+                    <div class="form-group">
+                        <label for="meta-description">Meta Description</label>
+                        <textarea id="meta-description" rows="3" placeholder="Page description for search engines"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="meta-keywords">Keywords (comma separated)</label>
+                        <input type="text" id="meta-keywords" placeholder="keyword1, keyword2, keyword3">
+                    </div>
+                `;
+                break;
+
+            case 'social-share':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label>Select Social Networks</label>
+                        <div>
+                            <label><input type="checkbox" name="social-network" value="facebook" checked> Facebook</label>
+                        </div>
+                        <div>
+                            <label><input type="checkbox" name="social-network" value="twitter" checked> Twitter</label>
+                        </div>
+                        <div>
+                            <label><input type="checkbox" name="social-network" value="whatsapp" checked> WhatsApp</label>
+                        </div>
+                        <div>
+                            <label><input type="checkbox" name="social-network" value="telegram"> Telegram</label>
+                        </div>
+                        <div>
+                            <label><input type="checkbox" name="social-network" value="linkedin"> LinkedIn</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="share-text">Share Text</label>
+                        <input type="text" id="share-text" placeholder="Check this out!">
+                    </div>
+                `;
+                break;
+
+            case 'popup-button':
+                modalBody.innerHTML = `
+                    <div class="form-group">
+                        <label for="popup-btn-text">Button Text</label>
+                        <input type="text" id="popup-btn-text" value="Open Popup">
+                    </div>
+                    <div class="form-group">
+                        <label for="popup-content">Popup Content (HTML)</label>
+                        <textarea id="popup-content" rows="4" placeholder="Enter HTML content for the popup"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="popup-width">Popup Width (px or %)</label>
+                        <input type="text" id="popup-width" value="500px">
+                    </div>
+                `;
+                break;
+
+            default:
+                modalBody.innerHTML = `<p>Options for this tool will be available soon.</p>`;
+        }
+
+        // Set apply button functionality
+        applyBtn.onclick = function() {
+            applyTool(tool);
+            modal.style.display = 'none';
+        };
+
+        // Show the modal
+        modal.style.display = 'flex';
+    }
+
+    function applyTool(tool) {
+        let codeToInsert = '';
+        
+        switch(tool) {
+            case 'youtube-video':
+                const videoUrl = document.getElementById('youtube-url').value;
+                const width = document.getElementById('youtube-width').value;
+                const height = document.getElementById('youtube-height').value;
+                
+                if (!videoUrl) {
+                    showNotification('Please enter a YouTube URL');
+                    return;
+                }
+                
+                // Extract video ID from URL
+                let videoId = '';
+                const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                const match = videoUrl.match(regExp);
+                
+                if (match && match[2].length === 11) {
+                    videoId = match[2];
+                } else {
+                    showNotification('Invalid YouTube URL');
+                    return;
+                }
+                
+                codeToInsert = `<iframe width="${width}" height="${height}" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+                break;
+
+            case 'youtube-autoplay':
+                const autoplay = document.getElementById('youtube-autoplay').checked;
+                const mute = document.getElementById('youtube-mute').checked;
+                
+                // This would typically modify an existing iframe
+                codeToInsert = `<!-- Add autoplay=${autoplay ? 1 : 0}&mute=${mute ? 1 : 0} to your YouTube iframe URL -->`;
+                showNotification('Add these parameters to your YouTube iframe URL');
+                break;
+
+            case 'text-font':
+                const fontFamily = document.getElementById('text-font-family').value;
+                codeToInsert = `<span style="font-family: ${fontFamily}">Your text here</span>`;
+                break;
+
+            case 'text-size':
+                const fontSize = document.getElementById('text-font-size').value;
+                const fontColor = document.getElementById('text-font-color').value;
+                codeToInsert = `<span style="font-size: ${fontSize}; color: ${fontColor}">Your styled text</span>`;
+                break;
+
+            case 'link-text':
+                const linkText = document.getElementById('link-text').value || 'Click here';
+                const linkUrl = document.getElementById('link-url').value || '#';
+                const newTab = document.getElementById('link-new-tab').checked;
+                
+                codeToInsert = `<a href="${linkUrl}"${newTab ? ' target="_blank"' : ''}>${linkText}</a>`;
+                break;
+
+            case 'html-embed':
+                codeToInsert = document.getElementById('html-code').value;
+                break;
+
+            case 'seo-meta':
+                const metaTitle = document.getElementById('meta-title').value;
+                const metaDescription = document.getElementById('meta-description').value;
+                const metaKeywords = document.getElementById('meta-keywords').value;
+                
+                codeToInsert = `<!-- Insert this in the <head> section -->
+<meta name="description" content="${metaDescription}">
+<meta name="keywords" content="${metaKeywords}">
+<title>${metaTitle}</title>`;
+                break;
+
+            case 'social-share':
+                const selectedNetworks = Array.from(document.querySelectorAll('input[name="social-network"]:checked')).map(el => el.value);
+                const shareText = document.getElementById('share-text').value || 'Check this out!';
+                
+                if (selectedNetworks.length === 0) {
+                    showNotification('Please select at least one social network');
+                    return;
+                }
+                
+                codeToInsert = `<div class="social-share-buttons">`;
+                
+                if (selectedNetworks.includes('facebook')) {
+                    codeToInsert += `
+    <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}" target="_blank">
+        <i class="fab fa-facebook"></i> Share on Facebook
+    </a>`;
+                }
+                
+                if (selectedNetworks.includes('twitter')) {
+                    codeToInsert += `
+    <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}" target="_blank">
+        <i class="fab fa-twitter"></i> Share on Twitter
+    </a>`;
+                }
+                
+                if (selectedNetworks.includes('whatsapp')) {
+                    codeToInsert += `
+    <a href="https://wa.me/?text=${encodeURIComponent(shareText + ' ' + window.location.href)}" target="_blank">
+        <i class="fab fa-whatsapp"></i> Share on WhatsApp
+    </a>`;
+                }
+                
+                if (selectedNetworks.includes('telegram')) {
+                    codeToInsert += `
+    <a href="https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}" target="_blank">
+        <i class="fab fa-telegram"></i> Share on Telegram
+    </a>`;
+                }
+                
+                if (selectedNetworks.includes('linkedin')) {
+                    codeToInsert += `
+    <a href="https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(shareText)}" target="_blank">
+        <i class="fab fa-linkedin"></i> Share on LinkedIn
+    </a>`;
+                }
+                
+                codeToInsert += `\n</div>`;
+                break;
+
+            case 'popup-button':
+                const btnText = document.getElementById('popup-btn-text').value || 'Open Popup';
+                const popupContent = document.getElementById('popup-content').value || '<p>Popup content goes here</p>';
+                const popupWidth = document.getElementById('popup-width').value || '500px';
+                
+                codeToInsert = `<!-- HTML -->
+<button id="customPopupBtn">${btnText}</button>
+
+<div id="customPopup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: ${popupWidth}; background: white; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.3); z-index: 1000;">
+    ${popupContent}
+    <button id="closePopup" style="position: absolute; top: 10px; right: 10px;">×</button>
+</div>
+<div id="popupOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;"></div>
+
+<!-- JavaScript -->
+<script>
+    document.getElementById('customPopupBtn').addEventListener('click', function() {
+        document.getElementById('popupOverlay').style.display = 'block';
+        document.getElementById('customPopup').style.display = 'block';
+    });
+    
+    document.getElementById('closePopup').addEventListener('click', function() {
+        document.getElementById('popupOverlay').style.display = 'none';
+        document.getElementById('customPopup').style.display = 'none';
+    });
+    
+    document.getElementById('popupOverlay').addEventListener('click', function() {
+        document.getElementById('popupOverlay').style.display = 'none';
+        document.getElementById('customPopup').style.display = 'none';
+    });
+<\/script>`;
+                break;
+
+            default:
+                showNotification('This tool is not fully implemented yet');
+                return;
+        }
+        
+        // Insert the code at the current cursor position
+        const cursor = editor.getCursor();
+        editor.replaceRange(codeToInsert, cursor);
+        
+        showNotification('Code inserted successfully');
+    }
+
+    // AI Chat Assistant Functionality
+    function initChatAssistant() {
+        const chatToggle = document.getElementById('chatToggle');
+        const chatContainer = document.getElementById('chatContainer');
+        const closeChat = document.getElementById('closeChat');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const voiceBtn = document.getElementById('voiceBtn');
+        
+        // Toggle chat visibility
+        chatToggle.addEventListener('click', () => {
+            chatContainer.classList.toggle('active');
+        });
+        
+        closeChat.addEventListener('click', () => {
+            chatContainer.classList.remove('active');
+        });
+        
+        // Handle sending messages
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            chatInput.value = '';
+            
+            // Simulate AI response (in a real app, this would call an API)
+            simulateAIResponse(message);
+        }
+        
+        // Add message to chat
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            
+            messageDiv.innerHTML = `
+                ${text}
+                <div class="message-actions">
+                    <button class="message-action" data-action="copy"><i class="fas fa-copy"></i> Copy</button>
+                    <button class="message-action" data-action="speak"><i class="fas fa-volume-up"></i> Speak</button>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Add event listeners to action buttons
+            messageDiv.querySelector('[data-action="copy"]').addEventListener('click', () => {
+                navigator.clipboard.writeText(text);
+                showNotification('Message copied to clipboard');
+            });
+            
+            messageDiv.querySelector('[data-action="speak"]').addEventListener('click', () => {
+                speakText(text);
+            });
+        }
+        
+        // Simulate AI response (replace with actual API call)
+        async function simulateAIResponse(message) {
+    // টাইপিং ইন্ডিকেটর দেখান
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'message ai-message';
+    typingIndicator.innerHTML = '<i class="fas fa-ellipsis-h"></i> Typing...';
+    chatMessages.appendChild(typingIndicator);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // DeepSeek API কল
+    const API_KEY = "sk-c0aa0165c9ae4ca9ae681b807a9ea614"; // এখানে আপনার API কী বসান
+    const API_URL = "https://api.deepseek.com/v1/chat/completions";
+    
+    try {
+        const response = await fetch(API_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "deepseek-chat",
+                messages: [{ role: "user", content: message }],
+                max_tokens: 1000
+            })
+        });
+
+        const data = await response.json();
+        const aiResponse = data.choices[0].message.content;
+
+        // টাইপিং ইন্ডিকেটর সরিয়ে রেসপন্স দেখান
+        chatMessages.removeChild(typingIndicator);
+        addMessage(aiResponse, 'ai');
+        
+    } catch (error) {
+        console.error("API Error:", error);
+        chatMessages.removeChild(typingIndicator);
+        addMessage("Sorry, I couldn't get a response. Please try again.", 'ai');
+    }
+}
+        
+        // Text-to-speech function
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1;
+                utterance.pitch = 1;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showNotification('Text-to-speech not supported in your browser');
+            }
+        }
+        
+        // Voice recognition
+        let recognition;
+        try {
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            voiceBtn.addEventListener('click', () => {
+                if (voiceBtn.classList.contains('listening')) {
+                    recognition.stop();
+                    voiceBtn.classList.remove('listening');
+                } else {
+                    recognition.start();
+                    voiceBtn.classList.add('listening');
+                }
+            });
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                chatInput.value = transcript;
+                voiceBtn.classList.remove('listening');
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error', event.error);
+                voiceBtn.classList.remove('listening');
+                showNotification('Voice recognition error: ' + event.error);
+            };
+        } catch (e) {
+            console.warn('Speech recognition not supported');
+            voiceBtn.style.display = 'none';
+        }
+        
+        // Event listeners
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    }
+
+    // Custom Keyboard Functionality
+    function initCustomKeyboard() {
+        const keyboardBtn = document.getElementById('keyboardBtn');
+        const keyboardContainer = document.getElementById('keyboardContainer');
+        const closeKeyboard = document.getElementById('closeKeyboard');
+        const languageBtns = document.querySelectorAll('.language-btn');
+        const keyboardTabs = document.querySelectorAll('.keyboard-tab');
+        const keyboardKeys = document.querySelectorAll('.keyboard-key:not(.snippet)');
+        const snippetKeys = document.querySelectorAll('.keyboard-key.snippet');
+        
+        // Toggle keyboard visibility
+        keyboardBtn.addEventListener('click', () => {
+            keyboardContainer.classList.toggle('active');
+        });
+        
+        closeKeyboard.addEventListener('click', () => {
+            keyboardContainer.classList.remove('active');
+        });
+        
+        // Language switching
+        languageBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                languageBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                // In a real implementation, you would change the keyboard layout
+                // based on the selected programming language
+                showNotification(`Switched to ${this.textContent} mode`);
+            });
+        });
+        
+        // Tab switching
+        keyboardTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                keyboardTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                const tabName = this.getAttribute('data-tab');
+                document.querySelectorAll('.keyboard-main, .symbols-container, .snippets-container').forEach(el => {
+                    el.classList.remove('active');
+                });
+                
+                if (tabName === 'main') {
+                    document.querySelector('.keyboard-main').classList.add('active');
+                } else if (tabName === 'symbols') {
+                    document.querySelector('.symbols-container').classList.add('active');
+                } else if (tabName === 'snippets') {
+                    document.querySelector('.snippets-container').classList.add('active');
+                }
+            });
+        });
+        
+        // Handle key presses
+        keyboardKeys.forEach(key => {
+            key.addEventListener('click', function() {
+                const keyValue = this.getAttribute('data-key');
+                
+                // Visual feedback
+                this.classList.add('active');
+                setTimeout(() => this.classList.remove('active'), 100);
+                
+                // Handle special keys
+                if (keyValue === 'Backspace') {
+                    editor.execCommand('delCharBefore');
+                } else if (keyValue === 'Enter') {
+                    editor.replaceSelection('\n');
+                } else if (keyValue === 'Tab') {
+                    editor.replaceSelection('\t');
+                } else if (keyValue === 'Shift') {
+                    // In a real implementation, this would toggle shift state
+                    showNotification('Shift key pressed - would toggle case in full implementation');
+                } else {
+                    editor.replaceSelection(keyValue);
+                }
+                
+                // Focus back on editor
+                editor.focus();
+            });
+        });
+        
+        // Handle snippet keys
+        snippetKeys.forEach(key => {
+            key.addEventListener('click', function() {
+                const snippet = this.getAttribute('data-snippet');
+                let code = '';
+                
+                switch(snippet) {
+                    case 'html':
+                        code = '<html>\n<head>\n\t<title></title>\n</head>\n<body>\n\n</body>\n</html>';
+                        break;
+                    case 'div':
+                        code = '<div>\n\n</div>';
+                        break;
+                    case 'p':
+                        code = '<p></p>';
+                        break;
+                    case 'function':
+                        code = 'function myFunction() {\n\t\n}';
+                        break;
+                    case 'if':
+                        code = 'if (condition) {\n\t\n}';
+                        break;
+                    case 'for':
+                        code = 'for (let i = 0; i < array.length; i++) {\n\t\n}';
+                        break;
+                    case 'console':
+                        code = 'console.log();';
+                        break;
+                    case 'return':
+                        code = 'return value;';
+                        break;
+                    case 'import':
+                        code = 'import module from \'module\';';
+                        break;
+                }
+                
+                editor.replaceSelection(code);
+                editor.focus();
+                showNotification(`Inserted ${snippet} snippet`);
+            });
+        });
+    }
+
+    // Dark/Light Mode Toggle
+    function initThemeToggle() {
+        const modeToggle = document.getElementById('modeToggle');
+        let isDarkMode = true;
+        
+        modeToggle.addEventListener('click', function() {
+            isDarkMode = !isDarkMode;
+            
+            if (isDarkMode) {
+                document.documentElement.style.setProperty('--primary', '#1e1e2e');
+                document.documentElement.style.setProperty('--secondary', '#292d3e');
+                document.documentElement.style.setProperty('--toolbar', '#2a2f45');
+                document.documentElement.style.setProperty('--chat-bg', '#1e1e2e');
+                document.documentElement.style.setProperty('--chat-ai', '#3a3a4e');
+                modeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                editor.setOption('theme', 'material-ocean');
+            } else {
+                document.documentElement.style.setProperty('--primary', '#f0f2f5');
+                document.documentElement.style.setProperty('--secondary', '#ffffff');
+                document.documentElement.style.setProperty('--toolbar', '#e1e4e8');
+                document.documentElement.style.setProperty('--chat-bg', '#ffffff');
+                document.documentElement.style.setProperty('--chat-ai', '#e9ecef');
+                modeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                editor.setOption('theme', 'default');
+            }
+        });
+    }
+
+    // Initialize all components
+    document.addEventListener('DOMContentLoaded', function() {
+        initLoginGenerator();
+        initToolsPanel();
+        initChatAssistant();
+        initCustomKeyboard();
+        initThemeToggle();
+        
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('toolModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+            
+            const loginGenerator = document.getElementById('loginGenerator');
+            if (event.target === loginGenerator) {
+                loginGenerator.style.display = 'none';
+            }
+            
+            const toolsPanel = document.getElementById('toolsPanel');
+            if (event.target === toolsPanel) {
+                toolsPanel.style.display = 'none';
+            }
+            
+            const fileActions = document.getElementById('fileActions');
+            if (event.target !== document.getElementById('fileBtn') && !fileActions.contains(event.target)) {
+                fileActions.style.display = 'none';
+            }
+        });
+    });
+    </script>
+</body>
+</html>
