@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material-ocean.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        const DEEPSEEK_API_KEY = 'sk-c0aa0165c9ae4ca9ae681b807a9ea614'; // Replace with your actual API key
+        const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+    </script>
     <style>
         :root {
             --primary: #1e1e2e;
@@ -852,6 +857,9 @@
                 </button>
                 <button class="tool-btn" id="clearBtn">
                     <i class="fas fa-trash"></i> Clear
+                </button>
+                <button class="tool-btn" id="snapshotBtn">
+                    <i class="fas fa-mobile-alt"></i> Snapshot (Mobile Frame)
                 </button>
             </div>
             
@@ -2310,44 +2318,58 @@
         
         // Simulate AI response (replace with actual API call)
         async function simulateAIResponse(message) {
-    // টাইপিং ইন্ডিকেটর দেখান
-    const typingIndicator = document.createElement('div');
-    typingIndicator.className = 'message ai-message';
-    typingIndicator.innerHTML = '<i class="fas fa-ellipsis-h"></i> Typing...';
-    chatMessages.appendChild(typingIndicator);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+            // Show typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'message ai-message';
+            typingIndicator.innerHTML = '<i class="fas fa-ellipsis-h"></i> Typing...';
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    // DeepSeek API কল
-    const API_KEY = "sk-c0aa0165c9ae4ca9ae681b807a9ea614"; // এখানে আপনার API কী বসান
-    const API_URL = "https://api.deepseek.com/v1/chat/completions";
-    
-    try {
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY}`
-            },
-            body: JSON.stringify({
-                model: "deepseek-chat",
-                messages: [{ role: "user", content: message }],
-                max_tokens: 1000
-            })
-        });
+            try {
+                const response = await fetch(DEEPSEEK_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a helpful coding assistant. Provide concise, accurate answers with code examples when appropriate."
+                            },
+                            {
+                                role: "user",
+                                content: message
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1000
+                    })
+                });
 
-        const data = await response.json();
-        const aiResponse = data.choices[0].message.content;
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
 
-        // টাইপিং ইন্ডিকেটর সরিয়ে রেসপন্স দেখান
-        chatMessages.removeChild(typingIndicator);
-        addMessage(aiResponse, 'ai');
-        
-    } catch (error) {
-        console.error("API Error:", error);
-        chatMessages.removeChild(typingIndicator);
-        addMessage("Sorry, I couldn't get a response. Please try again.", 'ai');
-    }
-}
+                const data = await response.json();
+                
+                // Remove typing indicator
+                chatMessages.removeChild(typingIndicator);
+                
+                // Add AI response
+                if (data.choices && data.choices[0] && data.choices[0].message) {
+                    addMessage(data.choices[0].message.content, 'ai');
+                } else {
+                    addMessage("I received an unexpected response format from the API.", 'ai');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                chatMessages.removeChild(typingIndicator);
+                addMessage("Sorry, I encountered an error processing your request. Please try again later.", 'ai');
+            }
+        }
         
         // Text-to-speech function
         function speakText(text) {
@@ -2554,6 +2576,88 @@
         });
     }
 
+    // Snapshot Feature
+    function initSnapshotFeature() {
+        document.getElementById('snapshotBtn').addEventListener('click', function() {
+            // Create a mobile frame container
+            const mobileFrame = document.createElement('div');
+            mobileFrame.style.position = 'fixed';
+            mobileFrame.style.top = '50%';
+            mobileFrame.style.left = '50%';
+            mobileFrame.style.transform = 'translate(-50%, -50%)';
+            mobileFrame.style.width = '375px';
+            mobileFrame.style.height = '667px';
+            mobileFrame.style.border = '16px solid #333';
+            mobileFrame.style.borderRadius = '40px';
+            mobileFrame.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
+            mobileFrame.style.overflow = 'hidden';
+            mobileFrame.style.zIndex = '2000';
+            mobileFrame.style.backgroundColor = '#fff';
+            
+            // Create the iframe content inside the mobile frame
+            const frameContent = document.createElement('iframe');
+            frameContent.style.width = '100%';
+            frameContent.style.height = '100%';
+            frameContent.style.border = 'none';
+            frameContent.srcdoc = editor.getValue();
+            
+            // Add close button
+            const closeBtn = document.createElement('button');
+            closeBtn.innerHTML = '&times;';
+            closeBtn.style.position = 'absolute';
+            closeBtn.style.top = '-10px';
+            closeBtn.style.right = '-10px';
+            closeBtn.style.width = '30px';
+            closeBtn.style.height = '30px';
+            closeBtn.style.borderRadius = '50%';
+            closeBtn.style.background = '#ff4444';
+            closeBtn.style.color = 'white';
+            closeBtn.style.border = 'none';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.style.zIndex = '2001';
+            closeBtn.style.fontSize = '16px';
+            
+            // Add download button
+            const downloadBtn = document.createElement('button');
+            downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
+            downloadBtn.style.position = 'absolute';
+            downloadBtn.style.bottom = '-10px';
+            downloadBtn.style.right = '-10px';
+            downloadBtn.style.width = '30px';
+            downloadBtn.style.height = '30px';
+            downloadBtn.style.borderRadius = '50%';
+            downloadBtn.style.background = '#4CAF50';
+            downloadBtn.style.color = 'white';
+            downloadBtn.style.border = 'none';
+            downloadBtn.style.cursor = 'pointer';
+            downloadBtn.style.zIndex = '2001';
+            downloadBtn.style.fontSize = '16px';
+            
+            // Add elements to the frame
+            mobileFrame.appendChild(frameContent);
+            mobileFrame.appendChild(closeBtn);
+            mobileFrame.appendChild(downloadBtn);
+            document.body.appendChild(mobileFrame);
+            
+            // Close functionality
+            closeBtn.addEventListener('click', function() {
+                document.body.removeChild(mobileFrame);
+            });
+            
+            // Download functionality
+            downloadBtn.addEventListener('click', function() {
+                // Create a canvas to capture the frame
+                html2canvas(frameContent).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'mobile-screenshot.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    showNotification('Screenshot downloaded!');
+                });
+            });
+        });
+    }
+
     // Initialize all components
     document.addEventListener('DOMContentLoaded', function() {
         initLoginGenerator();
@@ -2561,6 +2665,7 @@
         initChatAssistant();
         initCustomKeyboard();
         initThemeToggle();
+        initSnapshotFeature();
         
         // Close modals when clicking outside
         window.addEventListener('click', function(event) {
