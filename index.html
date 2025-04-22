@@ -9,11 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script>
-        const DEEPSEEK_API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your actual API key
-        const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-        const HF_API_KEY = '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'; // Hugging Face API key
-    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
     <style>
         :root {
             --primary: #1e1e2e;
@@ -23,6 +20,10 @@
             --chat-bg: #1e1e2e;
             --chat-user: #4CAF50;
             --chat-ai: #3a3a4e;
+            --error: #ff4444;
+            --warning: #ffbb33;
+            --success: #00C851;
+            --info: #33b5e5;
         }
 
         * {
@@ -66,13 +67,13 @@
             padding: 10px 15px;
             background: var(--toolbar);
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-shrink: 0;
             flex-wrap: wrap;
         }
 
         .tool-btn {
-            padding: 8px 12px;
+            padding: 6px 10px;
             background: rgba(255,255,255,0.1);
             border: none;
             border-radius: 6px;
@@ -82,7 +83,7 @@
             align-items: center;
             gap: 6px;
             transition: all 0.2s;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .tool-btn.active {
@@ -1073,6 +1074,174 @@
             background: var(--accent);
         }
 
+        /* Code block highlighting */
+        pre {
+            background-color: #2a2f45;
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        code {
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            color: #f8f8f2;
+        }
+
+        /* Mobile Frame Styles */
+        .mobile-frame-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 3000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mobile-frame {
+            position: relative;
+            width: 375px;
+            height: 667px;
+            border: 16px solid #333;
+            border-radius: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+            background: white;
+        }
+
+        .mobile-frame-content {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .mobile-frame-controls {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .mobile-frame-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            z-index: 3001;
+        }
+
+        .close-frame-btn {
+            background: var(--error);
+        }
+
+        .download-frame-btn {
+            background: var(--success);
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+        }
+
+        .frame-options {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            z-index: 3001;
+        }
+
+        .frame-option-btn {
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 20px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .frame-option-btn.active {
+            background: var(--accent);
+        }
+
+        /* Language Selection Dropdown */
+        .language-selector {
+            position: fixed;
+            bottom: 85px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--toolbar);
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: none;
+        }
+
+        .language-selector select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: var(--secondary);
+            color: white;
+            font-size: 14px;
+        }
+
+        /* Auto-save indicator */
+        .autosave-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--toolbar);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 1000;
+            display: none;
+        }
+
+        /* Mobile Frame Brand Options */
+        .frame-brands {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+
+        .frame-brand {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .frame-brand.active {
+            border-color: var(--accent);
+        }
+
+        .frame-brand img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
         @media (max-width: 768px) {
             .panes-container {
                 flex-direction: column;
@@ -1109,6 +1278,11 @@
                 height: 35px;
                 font-size: 14px;
                 padding: 0 5px;
+            }
+
+            .mobile-frame {
+                width: 320px;
+                height: 568px;
             }
         }
     </style>
@@ -1273,9 +1447,6 @@
                 <button class="tool-option-btn" data-tool="youtube-autoplay">
                     <i class="fas fa-play-circle"></i> Auto-Play
                 </button>
-                <button class="tool-option-btn" data-tool="youtube-loop">
-                    <i class="fas fa-redo"></i> Loop Video
-                </button>
             </div>
         </div>
         
@@ -1297,41 +1468,23 @@
                 <button class="tool-option-btn" data-tool="text-underline">
                     <i class="fas fa-underline"></i> Underline
                 </button>
-                <button class="tool-option-btn" data-tool="text-align">
-                    <i class="fas fa-align-left"></i> Alignment
-                </button>
-                <button class="tool-option-btn" data-tool="text-highlight">
-                    <i class="fas fa-highlighter"></i> Highlight
-                </button>
             </div>
         </div>
         
         <div class="tools-category">
-            <h4><i class="fas fa-link"></i> Hyperlinks & Navigation</h4>
+            <h4><i class="fas fa-link"></i> Hyperlinks</h4>
             <div class="tools-options">
                 <button class="tool-option-btn" data-tool="link-text">
                     <i class="fas fa-link"></i> Text Link
                 </button>
-                <button class="tool-option-btn" data-tool="link-image">
-                    <i class="fas fa-image"></i> Image Link
-                </button>
-                <button class="tool-option-btn" data-tool="link-anchor">
-                    <i class="fas fa-anchor"></i> Anchor Links
-                </button>
             </div>
         </div>
         
         <div class="tools-category">
-            <h4><i class="fab fa-html5"></i> HTML & Ads</h4>
+            <h4><i class="fab fa-html5"></i> HTML</h4>
             <div class="tools-options">
                 <button class="tool-option-btn" data-tool="html-embed">
                     <i class="fas fa-code"></i> Embed HTML
-                </button>
-                <button class="tool-option-btn" data-tool="ad-embed">
-                    <i class="fas fa-ad"></i> Ad Network Code
-                </button>
-                <button class="tool-option-btn" data-tool="javascript-exec">
-                    <i class="fab fa-js"></i> JavaScript
                 </button>
             </div>
         </div>
@@ -1342,78 +1495,6 @@
                 <button class="tool-option-btn" data-tool="seo-meta">
                     <i class="fas fa-tags"></i> Meta Tags
                 </button>
-                <button class="tool-option-btn" data-tool="seo-url">
-                    <i class="fas fa-link"></i> Friendly URLs
-                </button>
-                <button class="tool-option-btn" data-tool="seo-social">
-                    <i class="fas fa-share-alt"></i> Social Media
-                </button>
-            </div>
-        </div>
-        
-        <div class="tools-category">
-            <h4><i class="fas fa-share-alt"></i> Social Media</h4>
-            <div class="tools-options">
-                <button class="tool-option-btn" data-tool="social-share">
-                    <i class="fas fa-share"></i> Share Buttons
-                </button>
-                <button class="tool-option-btn" data-tool="copy-link">
-                    <i class="fas fa-copy"></i> Copy Link
-                </button>
-            </div>
-        </div>
-        
-        <div class="tools-category">
-            <h4><i class="fas fa-layer-group"></i> Content Sections</h4>
-            <div class="tools-options">
-                <button class="tool-option-btn" data-tool="collapsible">
-                    <i class="fas fa-chevron-down"></i> Collapsible
-                </button>
-                <button class="tool-option-btn" data-tool="read-more">
-                    <i class="fas fa-book-open"></i> Read More
-                </button>
-            </div>
-        </div>
-        
-        <div class="tools-category">
-            <h4><i class="fas fa-table"></i> Tables & Lists</h4>
-            <div class="tools-options">
-                <button class="tool-option-btn" data-tool="data-table">
-                    <i class="fas fa-table"></i> Data Table
-                </button>
-                <button class="tool-option-btn" data-tool="pricing-table">
-                    <i class="fas fa-dollar-sign"></i> Pricing Table
-                </button>
-                <button class="tool-option-btn" data-tool="custom-list">
-                    <i class="fas fa-list"></i> Custom Lists
-                </button>
-            </div>
-        </div>
-        
-        <div class="tools-category">
-            <h4><i class="fas fa-paint-brush"></i> Styling & Effects</h4>
-            <div class="tools-options">
-                <button class="tool-option-btn" data-tool="custom-button">
-                    <i class="fas fa-square"></i> Custom Buttons
-                </button>
-                <button class="tool-option-btn" data-tool="gradient">
-                    <i class="fas fa-fill-drip"></i> Gradients
-                </button>
-                <button class="tool-option-btn" data-tool="hover-effects">
-                    <i class="fas fa-mouse-pointer"></i> Hover Effects
-                </button>
-            </div>
-        </div>
-        
-        <div class="tools-category">
-            <h4><i class="fas fa-moon"></i> Themes & Modes</h4>
-            <div class="tools-options">
-                <button class="tool-option-btn" data-tool="dark-mode">
-                    <i class="fas fa-moon"></i> Dark/Light Mode
-                </button>
-                <button class="tool-option-btn" data-tool="theme-color">
-                    <i class="fas fa-palette"></i> Theme Colors
-                </button>
             </div>
         </div>
         
@@ -1422,15 +1503,6 @@
             <div class="tools-options">
                 <button class="tool-option-btn" data-tool="popup-button">
                     <i class="fas fa-window-restore"></i> Popup Button
-                </button>
-                <button class="tool-option-btn" data-tool="popup-html">
-                    <i class="fas fa-code"></i> Custom HTML Popup
-                </button>
-                <button class="tool-option-btn" data-tool="popup-size">
-                    <i class="fas fa-expand"></i> Size & Position
-                </button>
-                <button class="tool-option-btn" data-tool="popup-timer">
-                    <i class="fas fa-clock"></i> Auto Close
                 </button>
             </div>
         </div>
@@ -1483,12 +1555,12 @@
             <h3 class="popup-title">CodeX AI Assistant</h3>
             <div class="header-actions">
                 <div class="api-toggle">
-                    <span id="leftApiLabel">DeepSeek</span>
+                    <span id="leftApiLabel">Hugging Face</span>
                     <label class="switch">
                         <input type="checkbox" id="apiToggle">
                         <span class="slider"></span>
                     </label>
-                    <span id="rightApiLabel">OpenRouter</span>
+                    <span id="rightApiLabel">Gemini</span>
                 </div>
                 <button class="header-btn" id="settingsBtn" title="Settings">
                     <i class="fas fa-cog"></i>
@@ -1500,77 +1572,77 @@
             
             <!-- Settings Popup -->
             <div class="settings-popup" id="settingsPopup">
-                <h4 class="settings-title">API Settings</h4>
+                <h4 class="settings-title">AI Settings</h4>
                 
-                <div class="settings-item">
-                    <label for="deepseekKey">DeepSeek API Key</label>
-                    <div class="settings-input-group">
-                        <input type="text" id="deepseekKey" placeholder="Enter API key">
-                        <button class="settings-btn" id="saveDeepseekKey">Save</button>
-                    </div>
-                </div>
-                
-                <div class="settings-item">
-                    <label for="openrouterKey">OpenRouter API Key</label>
-                    <div class="settings-input-group">
-                        <input type="text" id="openrouterKey" placeholder="Enter API key">
-                        <button class="settings-btn" id="saveOpenrouterKey">Save</button>
-                    </div>
+                <div class="api-toggle" style="margin-bottom: 15px;">
+                    <span id="leftApiLabelSettings">Hugging Face</span>
+                    <label class="switch">
+                        <input type="checkbox" id="apiToggleSettings">
+                        <span class="slider"></span>
+                    </label>
+                    <span id="rightApiLabelSettings">Gemini</span>
                 </div>
                 
                 <div class="settings-item">
                     <label for="huggingfaceKey">Hugging Face API Key</label>
-                    <div class="settings-input-group">
-                        <input type="text" id="huggingfaceKey" placeholder="Enter API key" value="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">
-                        <button class="settings-btn" id="saveHuggingfaceKey">Save</button>
+                    <input type="text" id="huggingfaceKey" placeholder="Enter API key" value="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">
+                </div>
+                
+                <div class="settings-item">
+                    <label for="huggingfaceModel">Hugging Face Model</label>
+                    <input type="text" id="huggingfaceModel" value="bigcode/starcoder">
+                </div>
+                
+                <div class="settings-item">
+                    <label for="geminiKey">Gemini API Key</label>
+                    <input type="text" id="geminiKey" placeholder="Enter API key">
+                </div>
+                
+                <div class="settings-item">
+                    <label for="geminiModel">Gemini Model</label>
+                    <input type="text" id="geminiModel" value="gemini-1.5-flash">
+                </div>
+                
+                <div class="settings-item" id="optionalApiSection">
+                    <h4 class="settings-title" style="margin-top: 20px;">Optional APIs</h4>
+                    
+                    <div class="api-toggle" style="margin-bottom: 15px;">
+                        <span id="leftOptionalApiLabel">OpenRouter</span>
+                        <label class="switch">
+                            <input type="checkbox" id="optionalApiToggle">
+                            <span class="slider"></span>
+                        </label>
+                        <span id="rightOptionalApiLabel">DeepSeek</span>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label for="openrouterKey">OpenRouter API Key</label>
+                        <input type="text" id="openrouterKey" placeholder="Enter API key">
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label for="openrouterModel">OpenRouter Model</label>
+                        <select id="openrouterModel" class="settings-input-group">
+                            <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free)</option>
+                            <option value="openai/gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
+                            <option value="anthropic/claude-2">Anthropic Claude 2</option>
+                            <option value="google/gemini-pro">Google Gemini Pro</option>
+                            <option value="meta-llama/llama-2-70b-chat">Meta Llama 2 70B</option>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <label for="deepseekKey">DeepSeek API Key</label>
+                        <input type="text" id="deepseekKey" placeholder="Enter API key">
                     </div>
                 </div>
                 
-                <div class="settings-item" id="modelSelection">
-                    <label for="openrouterModel">OpenRouter Model</label>
-                    <select id="openrouterModel" class="settings-input-group">
-                        <option value="deepseek/deepseek-r1:free">DeepSeek R1 (Free)</option>
-                        <option value="openai/gpt-3.5-turbo">OpenAI GPT-3.5 Turbo</option>
-                        <option value="anthropic/claude-2">Anthropic Claude 2</option>
-                        <option value="google/gemini-pro">Google Gemini Pro</option>
-                        <option value="meta-llama/llama-2-70b-chat">Meta Llama 2 70B</option>
-                        <option value="openai/gpt-4">OpenAI GPT-4</option>
-                        <option value="anthropic/claude-3-opus">Anthropic Claude 3 Opus</option>
-                        <option value="anthropic/claude-3-sonnet">Anthropic Claude 3 Sonnet</option>
-                        <option value="google/gemini-pro">Google Gemini Pro</option>
-                        <option value="mistralai/mistral-7b-instruct">Mistral 7B Instruct</option>
-                        <option value="meta-llama/llama-3-70b-instruct">Meta Llama 3 70B Instruct</option>
-                    </select>
-                </div>
-                
-                <div class="settings-item" id="huggingfaceModelSelection">
-                    <label for="huggingfaceModel">Hugging Face Model</label>
-                    <select id="huggingfaceModel" class="settings-input-group">
-                        <option value="deepseek-ai/deepseek-chat">DeepSeek Chat</option>
-                        <option value="meta-llama/Llama-2-70b-chat-hf">Llama 2 70B Chat</option>
-                        <option value="mistralai/Mistral-7B-Instruct-v0.1">Mistral 7B Instruct</option>
-                        <option value="google/gemma-7b-it">Gemma 7B IT</option>
-                        <option value="codellama/CodeLlama-70b-Instruct-hf">CodeLlama 70B Instruct</option>
-                    </select>
-                </div>
-                
                 <div class="video-container">
-                    <iframe src="https://www.youtube.com/embed/EXAMPLE_VIDEO_ID" 
-                            title="API Setup Tutorial" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen></iframe>
+                    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                 </div>
                 
-                <button class="website-btn" onclick="window.open('https://platform.deepseek.com/','_blank')">
-                    <i class="fas fa-external-link-alt"></i> Get DeepSeek API Key
-                </button>
-                
-                <button class="website-btn" onclick="window.open('https://openrouter.ai/','_blank')">
-                    <i class="fas fa-external-link-alt"></i> Get OpenRouter API Key
-                </button>
-                
-                <button class="website-btn" onclick="window.open('https://huggingface.co/settings/tokens','_blank')">
-                    <i class="fas fa-external-link-alt"></i> Get Hugging Face API Key
+                <button class="settings-btn" id="saveSettings" style="width: 100%; margin-top: 15px;">
+                    Save Settings
                 </button>
                 
                 <div class="theme-toggle">
@@ -1591,6 +1663,8 @@
                     <div class="message-options">
                         <span class="message-option" onclick="copyMessage(this)"><i class="fas fa-copy"></i> Copy</span>
                         <span class="message-option" onclick="speakMessage(this)"><i class="fas fa-volume-up"></i> Speak</span>
+                        <span class="message-option" onclick="editMessage(this)"><i class="fas fa-edit"></i> Edit</span>
+                        <span class="message-option" onclick="replyToMessage(this)"><i class="fas fa-reply"></i> Reply</span>
                     </div>
                 </div>
             </div>
@@ -1607,7 +1681,7 @@
                         <input type="file" id="imageUpload" accept="image/*">
                         
                         <button type="submit" class="submit-btn" id="sendButton">
-                            <span id="btnText">Send</span>
+                            <i class="fas fa-paper-plane"></i>
                         </button>
                     </div>
                 </form>
@@ -1773,6 +1847,22 @@
         </div>
     </div>
 
+    <!-- Auto-save Indicator -->
+    <div class="autosave-indicator" id="autosaveIndicator">
+        <i class="fas fa-save"></i> Auto-saved
+    </div>
+
+    <!-- Language Selector -->
+    <div class="language-selector" id="languageSelector">
+        <select id="languageSelect">
+            <option value="en">English</option>
+            <option value="bn">Bengali</option>
+            <option value="hi">Hindi</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+        </select>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
@@ -1837,6 +1927,14 @@
         preview.open();
         preview.write(editor.getValue());
         preview.close();
+        
+        // Apply syntax highlighting to code blocks in preview
+        setTimeout(() => {
+            const previewDoc = document.getElementById('preview').contentDocument;
+            previewDoc.querySelectorAll('pre code').forEach((block) => {
+                hljs.highlightElement(block);
+            });
+        }, 100);
     };
     editor.on('change', handleEditorChange);
 
@@ -2202,9 +2300,23 @@
 
     // Copy code to clipboard
     document.getElementById('copyBtn').addEventListener('click', () => {
-        navigator.clipboard.writeText(editor.getValue())
-            .then(() => showNotification('Code copied to clipboard!'))
-            .catch(err => showNotification('Failed to copy code'));
+        const code = editor.getValue();
+        navigator.clipboard.writeText(code)
+            .then(() => {
+                showNotification('Code copied to clipboard!');
+                
+                // Show a more detailed toast with copy confirmation
+                const toast = document.getElementById('toast');
+                toast.textContent = 'Code copied to clipboard! Ready to paste.';
+                toast.classList.add('show-toast');
+                setTimeout(() => {
+                    toast.classList.remove('show-toast');
+                }, 2000);
+            })
+            .catch(err => {
+                showNotification('Failed to copy code');
+                console.error('Failed to copy code: ', err);
+            });
     });
 
     // File actions
@@ -2386,6 +2498,18 @@
                 `;
                 break;
 
+            case 'text-bold':
+                codeToInsert = '<strong>Bold text</strong>';
+                break;
+
+            case 'text-italic':
+                codeToInsert = '<em>Italic text</em>';
+                break;
+
+            case 'text-underline':
+                codeToInsert = '<u>Underlined text</u>';
+                break;
+
             case 'link-text':
                 modalBody.innerHTML = `
                     <div class="form-group">
@@ -2426,33 +2550,6 @@
                     <div class="form-group">
                         <label for="meta-keywords">Keywords (comma separated)</label>
                         <input type="text" id="meta-keywords" placeholder="keyword1, keyword2, keyword3">
-                    </div>
-                `;
-                break;
-
-            case 'social-share':
-                modalBody.innerHTML = `
-                    <div class="form-group">
-                        <label>Select Social Networks</label>
-                        <div>
-                            <label><input type="checkbox" name="social-network" value="facebook" checked> Facebook</label>
-                        </div>
-                        <div>
-                            <label><input type="checkbox" name="social-network" value="twitter" checked> Twitter</label>
-                        </div>
-                        <div>
-                            <label><input type="checkbox" name="social-network" value="whatsapp" checked> WhatsApp</label>
-                        </div>
-                        <div>
-                            <label><input type="checkbox" name="social-network" value="telegram"> Telegram</label>
-                        </div>
-                        <div>
-                            <label><input type="checkbox" name="social-network" value="linkedin"> LinkedIn</label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="share-text">Share Text</label>
-                        <input type="text" id="share-text" placeholder="Check this out!">
                     </div>
                 `;
                 break;
@@ -2537,6 +2634,18 @@
                 codeToInsert = `<span style="font-size: ${fontSize}; color: ${fontColor}">Your styled text</span>`;
                 break;
 
+            case 'text-bold':
+                codeToInsert = '<strong>Bold text</strong>';
+                break;
+
+            case 'text-italic':
+                codeToInsert = '<em>Italic text</em>';
+                break;
+
+            case 'text-underline':
+                codeToInsert = '<u>Underlined text</u>';
+                break;
+
             case 'link-text':
                 const linkText = document.getElementById('link-text').value || 'Click here';
                 const linkUrl = document.getElementById('link-url').value || '#';
@@ -2558,55 +2667,6 @@
 <meta name="description" content="${metaDescription}">
 <meta name="keywords" content="${metaKeywords}">
 <title>${metaTitle}</title>`;
-                break;
-
-            case 'social-share':
-                const selectedNetworks = Array.from(document.querySelectorAll('input[name="social-network"]:checked')).map(el => el.value);
-                const shareText = document.getElementById('share-text').value || 'Check this out!';
-                
-                if (selectedNetworks.length === 0) {
-                    showNotification('Please select at least one social network');
-                    return;
-                }
-                
-                codeToInsert = `<div class="social-share-buttons">`;
-                
-                if (selectedNetworks.includes('facebook')) {
-                    codeToInsert += `
-    <a href="https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}" target="_blank">
-        <i class="fab fa-facebook"></i> Share on Facebook
-    </a>`;
-                }
-                
-                if (selectedNetworks.includes('twitter')) {
-                    codeToInsert += `
-    <a href="https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(window.location.href)}" target="_blank">
-        <i class="fab fa-twitter"></i> Share on Twitter
-    </a>`;
-                }
-                
-                if (selectedNetworks.includes('whatsapp')) {
-                    codeToInsert += `
-    <a href="https://wa.me/?text=${encodeURIComponent(shareText + ' ' + window.location.href)}" target="_blank">
-        <i class="fab fa-whatsapp"></i> Share on WhatsApp
-    </a>`;
-                }
-                
-                if (selectedNetworks.includes('telegram')) {
-                    codeToInsert += `
-    <a href="https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(shareText)}" target="_blank">
-        <i class="fab fa-telegram"></i> Share on Telegram
-    </a>`;
-                }
-                
-                if (selectedNetworks.includes('linkedin')) {
-                    codeToInsert += `
-    <a href="https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(window.location.href)}&title=${encodeURIComponent(shareText)}" target="_blank">
-        <i class="fab fa-linkedin"></i> Share on LinkedIn
-    </a>`;
-                }
-                
-                codeToInsert += `\n</div>`;
                 break;
 
             case 'popup-button':
@@ -2660,39 +2720,52 @@
         const popup = document.getElementById('popup');
         const chatArea = document.getElementById('chatArea');
         const apiToggle = document.getElementById('apiToggle');
+        const apiToggleSettings = document.getElementById('apiToggleSettings');
+        const optionalApiToggle = document.getElementById('optionalApiToggle');
         const sendButton = document.getElementById('sendButton');
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsPopup = document.getElementById('settingsPopup');
         const themeToggle = document.getElementById('themeToggle');
         const messageForm = document.getElementById('messageForm');
-        const saveDeepseekKey = document.getElementById('saveDeepseekKey');
-        const saveOpenrouterKey = document.getElementById('saveOpenrouterKey');
-        const saveHuggingfaceKey = document.getElementById('saveHuggingfaceKey');
-        const modelSelection = document.getElementById('modelSelection');
-        const huggingfaceModelSelection = document.getElementById('huggingfaceModelSelection');
-        const openrouterModel = document.getElementById('openrouterModel');
-        const huggingfaceModel = document.getElementById('huggingfaceModel');
+        const saveSettings = document.getElementById('saveSettings');
         const closeChat = document.getElementById('closeChat');
         
         // API keys and model storage
-        let apiKeys = {
-            deepseek: localStorage.getItem('deepseekAPIKey') || '',
-            openrouter: localStorage.getItem('openrouterAPIKey') || '',
-            huggingface: localStorage.getItem('huggingfaceAPIKey') || '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'
+        let apiSettings = {
+            huggingface: {
+                key: localStorage.getItem('huggingfaceAPIKey') || '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',
+                model: localStorage.getItem('huggingfaceModel') || 'bigcode/starcoder'
+            },
+            gemini: {
+                key: localStorage.getItem('geminiAPIKey') || '',
+                model: localStorage.getItem('geminiModel') || 'gemini-1.5-flash'
+            },
+            openrouter: {
+                key: localStorage.getItem('openrouterAPIKey') || '',
+                model: localStorage.getItem('openrouterModel') || 'deepseek/deepseek-r1:free'
+            },
+            deepseek: {
+                key: localStorage.getItem('deepseekAPIKey') || ''
+            },
+            useOptionalApi: localStorage.getItem('useOptionalApi') === 'true',
+            currentPrimaryApi: localStorage.getItem('currentPrimaryApi') || 'huggingface'
         };
-        
-        let selectedModel = localStorage.getItem('openrouterModel') || 'deepseek/deepseek-r1:free';
-        let selectedHuggingfaceModel = localStorage.getItem('huggingfaceModel') || 'deepseek-ai/deepseek-chat';
-        let currentAPI = 'deepseek';
         
         // Initialize UI
         function initUI() {
             // Set API keys in inputs
-            document.getElementById('deepseekKey').value = apiKeys.deepseek;
-            document.getElementById('openrouterKey').value = apiKeys.openrouter;
-            document.getElementById('huggingfaceKey').value = apiKeys.huggingface;
-            openrouterModel.value = selectedModel;
-            huggingfaceModel.value = selectedHuggingfaceModel;
+            document.getElementById('huggingfaceKey').value = apiSettings.huggingface.key;
+            document.getElementById('huggingfaceModel').value = apiSettings.huggingface.model;
+            document.getElementById('geminiKey').value = apiSettings.gemini.key;
+            document.getElementById('geminiModel').value = apiSettings.gemini.model;
+            document.getElementById('openrouterKey').value = apiSettings.openrouter.key;
+            document.getElementById('openrouterModel').value = apiSettings.openrouter.model;
+            document.getElementById('deepseekKey').value = apiSettings.deepseek.key;
+            
+            // Set toggle states
+            apiToggle.checked = apiSettings.currentPrimaryApi === 'gemini';
+            apiToggleSettings.checked = apiSettings.currentPrimaryApi === 'gemini';
+            optionalApiToggle.checked = apiSettings.useOptionalApi;
             
             // Set theme
             const savedTheme = localStorage.getItem('theme');
@@ -2701,7 +2774,8 @@
                 themeToggle.checked = false;
             }
             
-            // Validate input
+            // Update UI
+            updateApiLabels();
             validateInput();
         }
         
@@ -2715,10 +2789,17 @@
         
         // API toggle functionality
         apiToggle.addEventListener('change', function() {
-            currentAPI = this.checked ? 'openrouter' : 'deepseek';
+            apiSettings.currentPrimaryApi = this.checked ? 'gemini' : 'huggingface';
             updateApiLabels();
-            modelSelection.style.display = currentAPI === 'openrouter' ? 'block' : 'none';
-            huggingfaceModelSelection.style.display = 'none';
+        });
+        
+        apiToggleSettings.addEventListener('change', function() {
+            apiSettings.currentPrimaryApi = this.checked ? 'gemini' : 'huggingface';
+            updateApiLabels();
+        });
+        
+        optionalApiToggle.addEventListener('change', function() {
+            apiSettings.useOptionalApi = this.checked;
         });
         
         // Settings button click handler
@@ -2737,42 +2818,29 @@
             e.stopPropagation();
         });
         
-        // Save DeepSeek API key
-        saveDeepseekKey.addEventListener('click', function() {
-            const key = document.getElementById('deepseekKey').value.trim();
-            apiKeys.deepseek = key;
-            localStorage.setItem('deepseekAPIKey', key);
-            showToast('DeepSeek API Key Saved');
-        });
-        
-        // Save OpenRouter API key
-        saveOpenrouterKey.addEventListener('click', function() {
-            const key = document.getElementById('openrouterKey').value.trim();
-            apiKeys.openrouter = key;
-            localStorage.setItem('openrouterAPIKey', key);
-            showToast('OpenRouter API Key Saved');
-        });
-        
-        // Save Hugging Face API key
-        saveHuggingfaceKey.addEventListener('click', function() {
-            const key = document.getElementById('huggingfaceKey').value.trim();
-            apiKeys.huggingface = key;
-            localStorage.setItem('huggingfaceAPIKey', key);
-            showToast('Hugging Face API Key Saved');
-        });
-        
-        // Save model selection
-        openrouterModel.addEventListener('change', function() {
-            selectedModel = this.value;
-            localStorage.setItem('openrouterModel', selectedModel);
-            showToast(`Model set to: ${this.options[this.selectedIndex].text}`);
-        });
-        
-        // Save Hugging Face model selection
-        huggingfaceModel.addEventListener('change', function() {
-            selectedHuggingfaceModel = this.value;
-            localStorage.setItem('huggingfaceModel', selectedHuggingfaceModel);
-            showToast(`Model set to: ${this.options[this.selectedIndex].text}`);
+        // Save settings
+        saveSettings.addEventListener('click', function() {
+            apiSettings.huggingface.key = document.getElementById('huggingfaceKey').value.trim();
+            apiSettings.huggingface.model = document.getElementById('huggingfaceModel').value.trim();
+            apiSettings.gemini.key = document.getElementById('geminiKey').value.trim();
+            apiSettings.gemini.model = document.getElementById('geminiModel').value.trim();
+            apiSettings.openrouter.key = document.getElementById('openrouterKey').value.trim();
+            apiSettings.openrouter.model = document.getElementById('openrouterModel').value;
+            apiSettings.deepseek.key = document.getElementById('deepseekKey').value.trim();
+            
+            // Save to localStorage
+            localStorage.setItem('huggingfaceAPIKey', apiSettings.huggingface.key);
+            localStorage.setItem('huggingfaceModel', apiSettings.huggingface.model);
+            localStorage.setItem('geminiAPIKey', apiSettings.gemini.key);
+            localStorage.setItem('geminiModel', apiSettings.gemini.model);
+            localStorage.setItem('openrouterAPIKey', apiSettings.openrouter.key);
+            localStorage.setItem('openrouterModel', apiSettings.openrouter.model);
+            localStorage.setItem('deepseekAPIKey', apiSettings.deepseek.key);
+            localStorage.setItem('useOptionalApi', apiSettings.useOptionalApi);
+            localStorage.setItem('currentPrimaryApi', apiSettings.currentPrimaryApi);
+            
+            showToast('Settings saved successfully');
+            settingsPopup.classList.remove('show');
         });
         
         // Theme toggle handler
@@ -2795,15 +2863,23 @@
         function updateApiLabels() {
             const leftLabel = document.getElementById('leftApiLabel');
             const rightLabel = document.getElementById('rightApiLabel');
+            const leftLabelSettings = document.getElementById('leftApiLabelSettings');
+            const rightLabelSettings = document.getElementById('rightApiLabelSettings');
             
-            if (currentAPI === 'deepseek') {
-                leftLabel.textContent = 'DeepSeek';
-                rightLabel.textContent = 'OpenRouter';
+            if (apiSettings.currentPrimaryApi === 'huggingface') {
+                leftLabel.textContent = 'Hugging Face';
+                rightLabel.textContent = 'Gemini';
+                leftLabelSettings.textContent = 'Hugging Face';
+                rightLabelSettings.textContent = 'Gemini';
                 apiToggle.checked = false;
+                apiToggleSettings.checked = false;
             } else {
-                leftLabel.textContent = 'OpenRouter';
-                rightLabel.textContent = 'DeepSeek';
+                leftLabel.textContent = 'Gemini';
+                rightLabel.textContent = 'Hugging Face';
+                leftLabelSettings.textContent = 'Gemini';
+                rightLabelSettings.textContent = 'Hugging Face';
                 apiToggle.checked = true;
+                apiToggleSettings.checked = true;
             }
         }
         
@@ -2811,6 +2887,14 @@
         document.getElementById('imageUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            
+            // Check file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Image size must be less than 5MB');
+                this.value = '';
+                document.getElementById('fileName').textContent = '';
+                return;
+            }
             
             document.getElementById('fileName').textContent = file.name;
             validateInput();
@@ -2845,16 +2929,23 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
             
-            let messageContent = marked.parse(content);
+            // Process markdown and highlight code blocks
+            let processedContent = marked.parse(content);
+            processedContent = processedContent.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, (match, code) => {
+                return `<pre><code>${hljs.highlightAuto(code).value}</code></pre>`;
+            });
+            
             if (imageUrl) {
-                messageContent += `<img src="${imageUrl}" alt="Uploaded image">`;
+                processedContent += `<img src="${imageUrl}" alt="Uploaded image">`;
             }
             
             messageDiv.innerHTML = `
-                ${messageContent}
+                ${processedContent}
                 <div class="message-options">
                     <span class="message-option" onclick="copyMessage(this)"><i class="fas fa-copy"></i> Copy</span>
                     <span class="message-option" onclick="speakMessage(this)"><i class="fas fa-volume-up"></i> Speak</span>
+                    <span class="message-option" onclick="editMessage(this)"><i class="fas fa-edit"></i> Edit</span>
+                    <span class="message-option" onclick="replyToMessage(this)"><i class="fas fa-reply"></i> Reply</span>
                 </div>
             `;
             
@@ -2862,27 +2953,117 @@
             chatArea.scrollTop = 0;
         }
         
-        window.copyMessage = function(element) {
+        function copyMessage(element) {
             const messageContent = element.closest('.message').textContent.trim();
             navigator.clipboard.writeText(messageContent).then(() => {
-                showToast('Copied to clipboard!');
+                showToast('Message copied to clipboard!');
             }).catch(err => {
                 showToast('Failed to copy text');
                 console.error('Failed to copy text: ', err);
             });
-        };
+        }
         
-        window.speakMessage = function(element) {
+        let currentSpeech = null;
+        function speakMessage(element) {
             if (!('speechSynthesis' in window)) {
                 showToast('Text-to-speech not supported');
                 return;
             }
             
             const messageContent = element.closest('.message').textContent.trim();
+            
+            // If speech is in progress, stop it
+            if (currentSpeech) {
+                window.speechSynthesis.cancel();
+                currentSpeech = null;
+                showToast('Speech stopped');
+                return;
+            }
+            
             const speech = new SpeechSynthesisUtterance(messageContent);
+            currentSpeech = speech;
+            
+            // Set language based on selected language
+            const langSelect = document.getElementById('languageSelect');
+            const selectedLang = langSelect.value;
+            
+            if (selectedLang === 'bn') {
+                speech.lang = 'bn-BD'; // Bengali
+            } else if (selectedLang === 'hi') {
+                speech.lang = 'hi-IN'; // Hindi
+            } else if (selectedLang === 'es') {
+                speech.lang = 'es-ES'; // Spanish
+            } else if (selectedLang === 'fr') {
+                speech.lang = 'fr-FR'; // French
+            } else {
+                speech.lang = 'en-US'; // Default English
+            }
+            
+            speech.onend = function() {
+                currentSpeech = null;
+            };
+            
+            speech.onerror = function(event) {
+                showToast('Error in speech synthesis');
+                console.error('SpeechSynthesis error:', event);
+            };
+            
             window.speechSynthesis.speak(speech);
             showToast('Reading message...');
-        };
+        }
+        
+        function editMessage(element) {
+            const messageDiv = element.closest('.message');
+            const messageContent = messageDiv.textContent.trim();
+            
+            // Replace message with input field
+            const inputField = document.createElement('textarea');
+            inputField.value = messageContent;
+            inputField.className = 'input-field';
+            inputField.style.width = '100%';
+            inputField.style.height = '100px';
+            
+            const saveButton = document.createElement('button');
+            saveButton.textContent = 'Save';
+            saveButton.className = 'submit-btn';
+            saveButton.style.marginTop = '10px';
+            
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'Cancel';
+            cancelButton.className = 'modal-btn modal-btn-secondary';
+            cancelButton.style.marginTop = '10px';
+            cancelButton.style.marginLeft = '10px';
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.display = 'flex';
+            buttonContainer.appendChild(saveButton);
+            buttonContainer.appendChild(cancelButton);
+            
+            messageDiv.innerHTML = '';
+            messageDiv.appendChild(inputField);
+            messageDiv.appendChild(buttonContainer);
+            
+            saveButton.addEventListener('click', function() {
+                const newContent = inputField.value.trim();
+                if (newContent) {
+                    const isUser = messageDiv.classList.contains('user-message');
+                    addMessage(newContent, isUser);
+                    messageDiv.remove();
+                }
+            });
+            
+            cancelButton.addEventListener('click', function() {
+                const isUser = messageDiv.classList.contains('user-message');
+                addMessage(messageContent, isUser);
+                messageDiv.remove();
+            });
+        }
+        
+        function replyToMessage(element) {
+            const messageContent = element.closest('.message').textContent.trim();
+            document.getElementById('userInput').value = `Reply to: ${messageContent}`;
+            document.getElementById('userInput').focus();
+        }
         
         async function sendMessage() {
             const input = document.getElementById('userInput');
@@ -2908,32 +3089,189 @@
             
             try {
                 let response;
+                let apiError = null;
                 
-                if (currentAPI === 'deepseek') {
-                    response = await callDeepSeekAPI(userMessage, imageFile);
-                } else if (currentAPI === 'openrouter') {
-                    response = await callOpenRouterAPI(userMessage, imageFile);
-                } else {
-                    response = await callHuggingFaceAPI(userMessage, imageFile);
+                // First try the primary API
+                try {
+                    if (apiSettings.currentPrimaryApi === 'huggingface') {
+                        response = await callHuggingFaceAPI(userMessage, imageFile);
+                    } else {
+                        response = await callGeminiAPI(userMessage, imageFile);
+                    }
+                } catch (primaryError) {
+                    console.error('Primary API Error:', primaryError);
+                    apiError = primaryError;
                 }
                 
-                const aiResponse = response.choices?.[0]?.message?.content || 
-                                  response.generated_text || 
-                                  response[0]?.generated_text || 
-                                  'No response received.';
-                addMessage(aiResponse);
+                // If primary API failed and optional API is enabled, try the fallback
+                if ((!response || apiError) && apiSettings.useOptionalApi) {
+                    try {
+                        if (apiSettings.openrouter.key && apiSettings.openrouter.key.trim() !== '') {
+                            response = await callOpenRouterAPI(userMessage, imageFile);
+                        } else if (apiSettings.deepseek.key && apiSettings.deepseek.key.trim() !== '') {
+                            response = await callDeepSeekAPI(userMessage, imageFile);
+                        }
+                    } catch (fallbackError) {
+                        console.error('Fallback API Error:', fallbackError);
+                        apiError = fallbackError;
+                    }
+                }
+                
+                if (response) {
+                    const aiResponse = response.choices?.[0]?.message?.content || 
+                                      response.candidates?.[0]?.content?.parts?.[0]?.text || 
+                                      response.generated_text || 
+                                      'No response received.';
+                    addMessage(aiResponse);
+                } else {
+                    addMessage(`Error: ${apiError?.message || 'Failed to get response from AI services'}\n\nPlease check your API keys in settings.`);
+                }
                 
             } catch (error) {
-                console.error('API Error:', error);
+                console.error('Error:', error);
                 addMessage(`Error: ${error.message}`);
             } finally {
-                sendButton.innerHTML = '<span id="btnText">Send</span>';
+                sendButton.innerHTML = '<i class="fas fa-paper-plane"></i>';
                 validateInput();
             }
         }
 
+        async function callHuggingFaceAPI(input, imageFile) {
+            if (!apiSettings.huggingface.key) {
+                throw new Error('Hugging Face API Key not set. Please add it in Settings.');
+            }
+            
+            const payload = {
+                inputs: input,
+                parameters: {
+                    return_full_text: false
+                }
+            };
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+            
+            try {
+                const response = await fetch(`https://api-inference.huggingface.co/models/${apiSettings.huggingface.model}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiSettings.huggingface.key}`
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Hugging Face API Error: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+
+        async function callGeminiAPI(input, imageFile) {
+            if (!apiSettings.gemini.key) {
+                throw new Error('Gemini API Key not set. Please add it in Settings.');
+            }
+            
+            const payload = {
+                contents: [{
+                    parts: [{
+                        text: input
+                    }]
+                }]
+            };
+            
+            if (imageFile) {
+                const imageBase64 = await toBase64(imageFile);
+                payload.contents[0].parts.push({
+                    inlineData: {
+                        mimeType: imageFile.type,
+                        data: imageBase64.split(',')[1]
+                    }
+                });
+            }
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+            
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiSettings.gemini.model}:generateContent?key=${apiSettings.gemini.key}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `Gemini API Error: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+
+        async function callOpenRouterAPI(input, imageFile) {
+            if (!apiSettings.openrouter.key) {
+                throw new Error('OpenRouter API Key not set. Please add it in Settings.');
+            }
+            
+            const payload = {
+                model: apiSettings.openrouter.model,
+                messages: [{ role: 'user', content: input }],
+            };
+            
+            if (imageFile) {
+                payload.messages[0].images = [await toBase64(imageFile)];
+            }
+            
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
+            
+            try {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiSettings.openrouter.key}`,
+                        'HTTP-Referer': window.location.href,
+                        'X-Title': 'CodeX AI Assistant'
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `OpenRouter API Error: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        }
+
         async function callDeepSeekAPI(input, imageFile) {
-            if (!apiKeys.deepseek) {
+            if (!apiSettings.deepseek.key) {
                 throw new Error('DeepSeek API Key not set. Please add it in Settings.');
             }
             
@@ -2949,100 +3287,32 @@
                 payload.messages[1].images = [await toBase64(imageFile)];
             }
             
-            const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKeys.deepseek}`
-                },
-                body: JSON.stringify(payload)
-            });
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds timeout
             
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `DeepSeek API Error: ${response.status}`);
+            try {
+                const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiSettings.deepseek.key}`
+                    },
+                    body: JSON.stringify(payload),
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `DeepSeek API Error: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                clearTimeout(timeoutId);
+                throw error;
             }
-            
-            return await response.json();
-        }
-
-        async function callOpenRouterAPI(input, imageFile) {
-            if (!apiKeys.openrouter) {
-                throw new Error('OpenRouter API Key not set. Please add it in Settings.');
-            }
-            
-            const payload = {
-                model: selectedModel,
-                messages: [{ role: 'user', content: input || '' }],
-            };
-            
-            if (imageFile) {
-                payload.messages[0].images = [await toBase64(imageFile)];
-            }
-            
-            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKeys.openrouter}`,
-                    'HTTP-Referer': window.location.href,
-                    'X-Title': 'CodeX AI Assistant'
-                },
-                body: JSON.stringify(payload)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error?.message || `OpenRouter API Error: ${response.status}`);
-            }
-            
-            return await response.json();
-        }
-
-        async function callHuggingFaceAPI(input, imageFile) {
-            if (!apiKeys.huggingface) {
-                throw new Error('Hugging Face API Key not set. Please add it in Settings.');
-            }
-            
-            let payload;
-            let endpoint;
-            
-            if (imageFile) {
-                // For models that support image input
-                const imageUrl = await toBase64(imageFile);
-                payload = {
-                    inputs: {
-                        text: input || '',
-                        image: imageUrl
-                    }
-                };
-                endpoint = `https://api-inference.huggingface.co/models/${selectedHuggingfaceModel}`;
-            } else {
-                // For text-only models
-                payload = {
-                    inputs: input || '',
-                    parameters: {
-                        return_full_text: false
-                    }
-                };
-                endpoint = `https://api-inference.huggingface.co/models/${selectedHuggingfaceModel}`;
-            }
-            
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKeys.huggingface}`
-                },
-                body: JSON.stringify(payload)
-            });
-            
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Hugging Face API Error: ${response.status}`);
-            }
-            
-            return await response.json();
         }
 
         function toBase64(file) {
@@ -3056,9 +3326,6 @@
         
         // Initialize
         initUI();
-        updateApiLabels();
-        modelSelection.style.display = currentAPI === 'openrouter' ? 'block' : 'none';
-        huggingfaceModelSelection.style.display = 'none';
     }
 
     // Custom Keyboard Functionality
@@ -3198,6 +3465,10 @@
                 document.documentElement.style.setProperty('--toolbar', '#2a2f45');
                 document.documentElement.style.setProperty('--chat-bg', '#1e1e2e');
                 document.documentElement.style.setProperty('--chat-ai', '#3a3a4e');
+                document.documentElement.style.setProperty('--error', '#ff4444');
+                document.documentElement.style.setProperty('--warning', '#ffbb33');
+                document.documentElement.style.setProperty('--success', '#00C851');
+                document.documentElement.style.setProperty('--info', '#33b5e5');
                 modeToggle.innerHTML = '<i class="fas fa-moon"></i>';
                 editor.setOption('theme', 'material-ocean');
             } else {
@@ -3206,6 +3477,10 @@
                 document.documentElement.style.setProperty('--toolbar', '#e1e4e8');
                 document.documentElement.style.setProperty('--chat-bg', '#ffffff');
                 document.documentElement.style.setProperty('--chat-ai', '#e9ecef');
+                document.documentElement.style.setProperty('--error', '#dc3545');
+                document.documentElement.style.setProperty('--warning', '#ffc107');
+                document.documentElement.style.setProperty('--success', '#28a745');
+                document.documentElement.style.setProperty('--info', '#17a2b8');
                 modeToggle.innerHTML = '<i class="fas fa-sun"></i>';
                 editor.setOption('theme', 'default');
             }
@@ -3215,82 +3490,196 @@
     // Snapshot Feature
     function initSnapshotFeature() {
         document.getElementById('snapshotBtn').addEventListener('click', function() {
-            // Create a mobile frame container
-            const mobileFrame = document.createElement('div');
-            mobileFrame.style.position = 'fixed';
-            mobileFrame.style.top = '50%';
-            mobileFrame.style.left = '50%';
-            mobileFrame.style.transform = 'translate(-50%, -50%)';
-            mobileFrame.style.width = '375px';
-            mobileFrame.style.height = '667px';
-            mobileFrame.style.border = '16px solid #333';
-            mobileFrame.style.borderRadius = '40px';
-            mobileFrame.style.boxShadow = '0 0 20px rgba(0,0,0,0.5)';
-            mobileFrame.style.overflow = 'hidden';
-            mobileFrame.style.zIndex = '2000';
-            mobileFrame.style.backgroundColor = '#fff';
+            // Create mobile frame container
+            const frameContainer = document.createElement('div');
+            frameContainer.className = 'mobile-frame-container';
             
-            // Create the iframe content inside the mobile frame
+            // Create mobile frame
+            const mobileFrame = document.createElement('div');
+            mobileFrame.className = 'mobile-frame';
+            
+            // Create frame content
             const frameContent = document.createElement('iframe');
-            frameContent.style.width = '100%';
-            frameContent.style.height = '100%';
-            frameContent.style.border = 'none';
+            frameContent.className = 'mobile-frame-content';
             frameContent.srcdoc = editor.getValue();
             
-            // Add close button
+            // Create controls
+            const controls = document.createElement('div');
+            controls.className = 'mobile-frame-controls';
+            
             const closeBtn = document.createElement('button');
+            closeBtn.className = 'mobile-frame-btn close-frame-btn';
             closeBtn.innerHTML = '&times;';
-            closeBtn.style.position = 'absolute';
-            closeBtn.style.top = '-10px';
-            closeBtn.style.right = '-10px';
-            closeBtn.style.width = '30px';
-            closeBtn.style.height = '30px';
-            closeBtn.style.borderRadius = '50%';
-            closeBtn.style.background = '#ff4444';
-            closeBtn.style.color = 'white';
-            closeBtn.style.border = 'none';
-            closeBtn.style.cursor = 'pointer';
-            closeBtn.style.zIndex = '2001';
-            closeBtn.style.fontSize = '16px';
             
-            // Add download button
             const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'mobile-frame-btn download-frame-btn';
             downloadBtn.innerHTML = '<i class="fas fa-download"></i>';
-            downloadBtn.style.position = 'absolute';
-            downloadBtn.style.bottom = '-10px';
-            downloadBtn.style.right = '-10px';
-            downloadBtn.style.width = '30px';
-            downloadBtn.style.height = '30px';
-            downloadBtn.style.borderRadius = '50%';
-            downloadBtn.style.background = '#4CAF50';
-            downloadBtn.style.color = 'white';
-            downloadBtn.style.border = 'none';
-            downloadBtn.style.cursor = 'pointer';
-            downloadBtn.style.zIndex = '2001';
-            downloadBtn.style.fontSize = '16px';
             
-            // Add elements to the frame
-            mobileFrame.appendChild(frameContent);
-            mobileFrame.appendChild(closeBtn);
-            mobileFrame.appendChild(downloadBtn);
-            document.body.appendChild(mobileFrame);
+            // Create frame options
+            const frameOptions = document.createElement('div');
+            frameOptions.className = 'frame-options';
             
-            // Close functionality
-            closeBtn.addEventListener('click', function() {
-                document.body.removeChild(mobileFrame);
+            const portraitBtn = document.createElement('button');
+            portraitBtn.className = 'frame-option-btn active';
+            portraitBtn.textContent = 'Portrait';
+            
+            const landscapeBtn = document.createElement('button');
+            landscapeBtn.className = 'frame-option-btn';
+            landscapeBtn.textContent = 'Landscape';
+            
+            // Create brand options
+            const brandOptions = document.createElement('div');
+            brandOptions.className = 'frame-brands';
+            
+            const brands = [
+                { name: 'iPhone', color: '#333' },
+                { name: 'Samsung', color: '#0c4da2' },
+                { name: 'Google', color: '#4285f4' },
+                { name: 'OnePlus', color: '#eb0029' }
+            ];
+            
+            brands.forEach(brand => {
+                const brandBtn = document.createElement('div');
+                brandBtn.className = 'frame-brand';
+                brandBtn.style.backgroundColor = brand.color;
+                brandBtn.title = brand.name;
+                
+                brandBtn.addEventListener('click', function() {
+                    document.querySelectorAll('.frame-brand').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    mobileFrame.style.borderColor = brand.color;
+                });
+                
+                if (brand.name === 'iPhone') {
+                    brandBtn.classList.add('active');
+                }
+                
+                brandOptions.appendChild(brandBtn);
             });
             
-            // Download functionality
+            // Add event listeners
+            portraitBtn.addEventListener('click', function() {
+                portraitBtn.classList.add('active');
+                landscapeBtn.classList.remove('active');
+                mobileFrame.style.width = '375px';
+                mobileFrame.style.height = '667px';
+            });
+            
+            landscapeBtn.addEventListener('click', function() {
+                landscapeBtn.classList.add('active');
+                portraitBtn.classList.remove('active');
+                mobileFrame.style.width = '667px';
+                mobileFrame.style.height = '375px';
+            });
+            
+            closeBtn.addEventListener('click', function() {
+                document.body.removeChild(frameContainer);
+            });
+            
             downloadBtn.addEventListener('click', function() {
                 // Create a canvas to capture the frame
-                html2canvas(frameContent).then(canvas => {
+                html2canvas(frameContent.contentDocument.body, {
+                    scale: 2, // Higher quality
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true
+                }).then(canvas => {
                     const link = document.createElement('a');
                     link.download = 'mobile-screenshot.png';
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                     showNotification('Screenshot downloaded!');
+                }).catch(err => {
+                    console.error('Error capturing screenshot:', err);
+                    showNotification('Failed to capture screenshot');
                 });
             });
+            
+            // Build the frame structure
+            frameOptions.appendChild(portraitBtn);
+            frameOptions.appendChild(landscapeBtn);
+            
+            controls.appendChild(closeBtn);
+            
+            mobileFrame.appendChild(frameContent);
+            mobileFrame.appendChild(controls);
+            mobileFrame.appendChild(downloadBtn);
+            
+            frameContainer.appendChild(mobileFrame);
+            frameContainer.appendChild(frameOptions);
+            frameContainer.appendChild(brandOptions);
+            
+            document.body.appendChild(frameContainer);
+            
+            // Focus the frame
+            setTimeout(() => {
+                frameContent.contentWindow.focus();
+            }, 100);
+        });
+    }
+
+    // Auto-save functionality
+    function initAutoSave() {
+        const autosaveIndicator = document.getElementById('autosaveIndicator');
+        let saveTimeout;
+        
+        // Save every 5 minutes
+        setInterval(() => {
+            saveContent();
+        }, 5 * 60 * 1000); // 5 minutes
+        
+        // Also save when content changes (with debounce)
+        editor.on('change', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                saveContent();
+            }, 5000); // 5 seconds after last change
+        });
+        
+        function saveContent() {
+            const content = editor.getValue();
+            localStorage.setItem('codexEditorContent', content);
+            
+            // Show auto-save indicator
+            autosaveIndicator.style.display = 'block';
+            setTimeout(() => {
+                autosaveIndicator.style.display = 'none';
+            }, 2000);
+        }
+        
+        // Load saved content if available
+        const savedContent = localStorage.getItem('codexEditorContent');
+        if (savedContent) {
+            editor.setValue(savedContent);
+            showNotification('Auto-saved content restored');
+        }
+    }
+
+    // Language Selector
+    function initLanguageSelector() {
+        const languageBtn = document.getElementById('languageBtn');
+        const languageSelector = document.getElementById('languageSelector');
+        const languageSelect = document.getElementById('languageSelect');
+        
+        // Toggle language selector visibility
+        if (languageBtn) {
+            languageBtn.addEventListener('click', function() {
+                languageSelector.style.display = languageSelector.style.display === 'none' ? 'block' : 'none';
+            });
+        }
+        
+        // Handle language change
+        languageSelect.addEventListener('change', function() {
+            const lang = this.value;
+            showNotification(`Language set to ${this.options[this.selectedIndex].text}`);
+            // In a full implementation, this would change the UI language
+        });
+        
+        // Close when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!languageSelector.contains(e.target) && e.target !== languageBtn) {
+                languageSelector.style.display = 'none';
+            }
         });
     }
 
@@ -3302,6 +3691,8 @@
         initCustomKeyboard();
         initThemeToggle();
         initSnapshotFeature();
+        initAutoSave();
+        initLanguageSelector();
         
         // Close modals when clicking outside
         window.addEventListener('click', function(event) {
@@ -3328,6 +3719,11 @@
             const settingsPopup = document.getElementById('settingsPopup');
             if (event.target === settingsPopup) {
                 settingsPopup.classList.remove('show');
+            }
+            
+            const languageSelector = document.getElementById('languageSelector');
+            if (event.target !== document.getElementById('languageBtn') && !languageSelector.contains(event.target)) {
+                languageSelector.style.display = 'none';
             }
         });
     });
